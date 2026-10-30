@@ -1,0 +1,36 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# 虚拟环境
+.venv*/
+venv/
+.env-setup-backup-*/
+
+# 本地依赖与二进制安装包
+wheels/
+
+# 模型、检查点、数据集等大文件
+resources/models/
+resources/checkpoints/
+resources/data/
+resources/doc-to-lora/
+
+# 实验与运行产物
+*.log
+/Main-Code/logs/
+
+# 调研来源、外部仓库快照与实验原始记录：仅保留在本地
+research/runs/
+research/pilot_20261028/
+research/benchmark_sources/
+research/method_sources/
+research/method_motivation_20261028/sources/
+research/archive/
+
+# 测试用例：数量多，仅保留在本地
+Main-Code/tests/

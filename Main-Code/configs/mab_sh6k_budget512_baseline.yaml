@@ -1,0 +1,67 @@
+# 首版配置样例。主代码和 prompts/ 已实现；数值为待评测的首轮起点。
+# 路径统一相对本 YAML 文件所在目录解析，禁止依赖启动时的工作目录。
+# 复制为同目录下的 mab_sh6k.yaml 后调整；代码不维护另一套默认配置。
+schema_version: 1
+
+experiment:
+  # 用于标识输出目录和运行记录，不决定算法分支。
+  name: mab_sh6k_lg_joint
+  seed: 42
+
+model:
+  d2l_root: ../../resources/doc-to-lora
+  checkpoint_path: ../../resources/checkpoints/qwen_4b_d2l/checkpoint-20000/pytorch_model.bin
+  base_model_path: ../../resources/models/Qwen3-4B-Instruct-2507
+  chat_template_path: ../../resources/doc-to-lora/chat_templates/Qwen/Qwen3-4B-Instruct-2507.jinja
+  # cuda 使用当前可见设备；进程外可通过 CUDA_VISIBLE_DEVICES 选择物理 GPU。
+  device: cuda
+  # 只约束基座加载精度；生成因子的精度按原生 checkpoint 契约核查。
+  dtype: bfloat16
+  # 选定后不因依赖缺失自动切换到另一注意力实现。
+  attention_implementation: eager
+
+memory:
+  local_slots: 4
+  global_blocks: 4
+  # 编译长度包含 D2L 聊天模板及特殊 token；不是原文字符数。
+  local_block_tokens: 512
+  global_block_tokens: 256
+  local_card_tokens: 96
+  # 包含来源、编译文本副本、卡片、记录、索引和必要元数据。
+  persistent_text_tokens: 8192
+  # 包含近期事件、执行摘要和唯一待处理候选。
+  working_tokens: 3072
+  # 同次维护中的所有补查共享此额度。
+  source_read_tokens: 1024
+  # 初次生成、来源补查、计划修复与纠正后的重提共用总次数。
+  max_manager_calls: 2
+
+generation:
+  task:
+    max_input_tokens: 4096
+    max_new_tokens: 512
+    do_sample: false
+  manager:
+    max_input_tokens: 6144
+    max_new_tokens: 1024
+    do_sample: false
+
+prompts:
+  manager_path: ../prompts/manager.md
+  task_path: ../prompts/task.md
+
+data:
+  # revision、Parquet 文件、source_filter 和原生指标均读取现有 manifest。
+  manifest_path: ../../resources/data/mab/first_eval.json
+  selection: first_evaluation
+  official_scorer_path: ../../research/benchmark_sources/mab_code/utils/eval_other_utils.py
+  # 来自 MAB FactConsolidation 的更新规则；同时提供给 writer 与 reader。
+  # 不包含具体问题、答案或答案相关 metadata；规则展示时机作为本项目协议记录。
+  protocol_instruction: |
+    Facts are prefixed with serial numbers. When facts conflict, the fact
+    with the larger serial number is newer. Use the supplied knowledge
+    pool rather than real-world knowledge when interpreting these facts.
+
+output:
+  # 每次运行在此目录下创建独立子目录，禁止覆盖已有运行产物。
+  directory: ../../research/runs

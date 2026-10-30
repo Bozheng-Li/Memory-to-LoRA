@@ -1,0 +1,325 @@
+{
+  "organized_at_utc": "2026-10-29T02:34:25.837188+00:00",
+  "path_mapping": {
+    "AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md": "docs/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+    "BENCHMARK_SURVEY.md": "docs/BENCHMARK_SURVEY.md",
+    "research/method_motivation_20261028/BENCHMARK_PILOT_AND_REPORTED_RESULTS_20261029.md": "docs/BENCHMARK_PILOT_AND_REPORTED_RESULTS_20261029.md",
+    "research/method_motivation_20261028/EVIDENCE_REVIEW.md": "docs/EVIDENCE_REVIEW.md",
+    ".research-plan-history": "research/archive/plan-history",
+    "scripts/_pilot/results_dilution.jsonl": "research/pilot_20261028/raw/results_dilution.jsonl",
+    "scripts/_pilot/results_mab_cr.jsonl": "research/pilot_20261028/raw/results_mab_cr.jsonl",
+    "scripts/_pilot/results_niah.jsonl": "research/pilot_20261028/raw/results_niah.jsonl",
+    "scripts/_pilot/run_cr.log": "research/pilot_20261028/raw/run_cr.log",
+    "scripts/_pilot/run_cr_v2.log": "research/pilot_20261028/raw/run_cr_v2.log",
+    "scripts/_pilot/run_dil.log": "research/pilot_20261028/raw/run_dil.log",
+    "scripts/_pilot/run_niah.log": "research/pilot_20261028/raw/run_niah.log"
+  },
+  "files": [
+    {
+      "old_path": "AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "new_path": "docs/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "sha256": "2a18a61ef265ea663e5ad7bea29ae229c58eea079a79d69f29ffa490d862f67f"
+    },
+    {
+      "old_path": "BENCHMARK_SURVEY.md",
+      "new_path": "docs/BENCHMARK_SURVEY.md",
+      "sha256": "9243a2da348d95da929e783dad11de71614cd99597b466cd6b7091f01d335174"
+    },
+    {
+      "old_path": "research/method_motivation_20261028/BENCHMARK_PILOT_AND_REPORTED_RESULTS_20261029.md",
+      "new_path": "docs/BENCHMARK_PILOT_AND_REPORTED_RESULTS_20261029.md",
+      "sha256": "2e1e3d9976616490fe1d3a37ded701a86ed867c2833207473b97decf037a967e"
+    },
+    {
+      "old_path": "research/method_motivation_20261028/EVIDENCE_REVIEW.md",
+      "new_path": "docs/EVIDENCE_REVIEW.md",
+      "sha256": "632aa2ddbe3bec83599978b63d636817b3611885d5a3df54b7f6280ba5debbdd"
+    },
+    {
+      "old_path": ".research-plan-history/BENCHMARK_SURVEY.first-round.2026-10-28.md",
+      "new_path": "research/archive/plan-history/BENCHMARK_SURVEY.first-round.2026-10-28.md",
+      "sha256": "9243a2da348d95da929e783dad11de71614cd99597b466cd6b7091f01d335174"
+    },
+    {
+      "old_path": ".research-plan-history/RESEARCH_PLAN.v2.1-to-v2.2.diff",
+      "new_path": "research/archive/plan-history/RESEARCH_PLAN.v2.1-to-v2.2.diff",
+      "sha256": "505bdb410d6e29de1feb20152e17a3d5bc93cdcf93f086345c3bbcbe11cb8c3f"
+    },
+    {
+      "old_path": ".research-plan-history/RESEARCH_PLAN.v2.1.2026-10-28.md",
+      "new_path": "research/archive/plan-history/RESEARCH_PLAN.v2.1.2026-10-28.md",
+      "sha256": "092a174e5321ac0cc4a60e7f79bf3a736650ec22b1a2397d5d46e7cce5d26b0d"
+    },
+    {
+      "old_path": ".research-plan-history/RESEARCH_PLAN.v2.2.2026-10-28.md",
+      "new_path": "research/archive/plan-history/RESEARCH_PLAN.v2.2.2026-10-28.md",
+      "sha256": "545d7b8586186ff22ffde3fa53b1440972c9f943e1ebb73bf04aa4785562d997"
+    },
+    {
+      "old_path": ".research-plan-history/RESEARCH_PLAN.v3.0.2026-10-28.md",
+      "new_path": "research/archive/plan-history/RESEARCH_PLAN.v3.0.2026-10-28.md",
+      "sha256": "36d4c65756fe6620cfd7bca3f95ebbff560a9864d1ae4a1486cd59fd493fd128"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "sha256": "e1515565dee512be755c7061b0eaf695b61fa9f0ee10c8856d9734824039652d"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/FEASIBILITY.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/FEASIBILITY.md",
+      "sha256": "7b6bea66648d04333e3785adbc0dafed8755c906b53ec25bb1ad64d7467f284a"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/MANIFEST.json",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/MANIFEST.json",
+      "sha256": "b7b09b5a8278ab37d242c6edbb1adbe03868b38ffd90d99d00868f6d2fa81ecb"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/README.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/README.md",
+      "sha256": "39aee0e5f4364e6c62ba5dac586b29b26ff650a5b03823ec2eb4a62ee7e0d8e9"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/RESEARCH_PLAN.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/RESEARCH_PLAN.md",
+      "sha256": "36d4c65756fe6620cfd7bca3f95ebbff560a9864d1ae4a1486cd59fd493fd128"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/BASELINES_AND_BENCHMARKS.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/BASELINES_AND_BENCHMARKS.md",
+      "sha256": "16a900feca5017de2f1df76fe6ea4166c67716e9a45ae74de2178dac7723c3a1"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/DERIVATION.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/DERIVATION.md",
+      "sha256": "9761e0ecbbfc40eb9a896a0f94428b06465c5b6720dc16b4f9f10bca7451b79a"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/EXPERIMENT_PLAN.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/EXPERIMENT_PLAN.md",
+      "sha256": "0a14b5b9af232f2431d17f148505d6be4f76e763885089c81093772d58b7c2c2"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/FINAL_PROPOSAL.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/FINAL_PROPOSAL.md",
+      "sha256": "7911a8d5e3292a2e702c4639fa27e7baa0b08907c0784efc9e6d858d151c400d"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/NOVELTY_CHECK.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/NOVELTY_CHECK.md",
+      "sha256": "60e10c941cd286745d9d866eb4b99dde00327af933f3703d0bfece9cbc22667f"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/PILOT_RESULTS.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/PILOT_RESULTS.md",
+      "sha256": "0f3f5f7262a08aab7e83082b3b1e81190761b8eb41c0cf4c38a17be2ca9e1d6c"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/README.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/README.md",
+      "sha256": "50a19a88eab9ba268e871884384ef468123dec8ff18261d1afee47dd007093a7"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/figures/make_figure.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/figures/make_figure.py",
+      "sha256": "782b6acd29b96e2aca4204b0cd05c945005284d442251f3dd0e1a66fb04701cd"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/figures/pact_architecture.png",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/figures/pact_architecture.png",
+      "sha256": "8f9be31d371fbac8f594ea94b3fa409eec8ba397a3416024cf02fa0ee94963cd"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/figures/pilot_dilution.png",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/figures/pilot_dilution.png",
+      "sha256": "80c5a018c0fdbe80ef500c9d1fa069376baf3d85228ca75b9759b3f6f95e50d9"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__init__.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__init__.py",
+      "sha256": "8a3b6746f099c9f74f777237b42c6e476c6f06308c0d5a623859cf15d6e9e46f"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/__init__.cpython-312.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/__init__.cpython-312.pyc",
+      "sha256": "73396c23aeafd05d9531f7a2d575e119809eb38e4c151c1b5100a48d03dde32b"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/env.cpython-312.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/env.cpython-312.pyc",
+      "sha256": "db61d0e933da53206eb54de976274bca1ab23242aa22005b4f9446b578c43972"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/learn.cpython-312.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/learn.cpython-312.pyc",
+      "sha256": "1543e3681bce9ce7c44e03e15dcdb30fc0a8e8874a904fad2afe7b724c16b0c2"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/memory.cpython-312.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/memory.cpython-312.pyc",
+      "sha256": "c7feaf108817fc3bed140c357388f230d1656895cce87415ebc73e449d56d286"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/train.cpython-312.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/__pycache__/train.cpython-312.pyc",
+      "sha256": "d2f6d126c9fd3c45d08b6d388896f1399a3514c4c4cd34467c65b25b6b1b16c7"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/dry_run.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/dry_run.py",
+      "sha256": "ac3797cc91fd45a66ad95be1ef7c7440983ae6da647f70b1b04cf0f79dbd56ae"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/env.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/env.py",
+      "sha256": "288c4c7819fd83a92ae98acbdfd78ed4f13426313097dac62b0dcbcf2ddacf95"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/learn.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/learn.py",
+      "sha256": "15df23b76d24621496939934951333b011ceada79d79e3e74ab9177a83d8be6b"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/memory.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/memory.py",
+      "sha256": "5f8738bad7c88395bea79218fdbc034d6736332700a4822b082dc08897165ba7"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/tests/__pycache__/test_pact_ref.cpython-312-pytest-9.1.1.pyc",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/tests/__pycache__/test_pact_ref.cpython-312-pytest-9.1.1.pyc",
+      "sha256": "c975e70a211f189d0ef604a7e6c68b24e09ac146b74b92382f357e804cb2dac5"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/tests/test_pact_ref.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/tests/test_pact_ref.py",
+      "sha256": "4a519884cb534309f0503f7296538c9db6b7e61c45752963f2ea3e8db3bb33f6"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/train.py",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/refine-logs/pact_ref/train.py",
+      "sha256": "83c7083db03a27c33e2869b0c08b27aec7a2fea23b5c8554efec157ffe3158fa"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/AGENT_MANAGED_LOCAL_GLOBAL_FLOW_20261029.md",
+      "sha256": "e1515565dee512be755c7061b0eaf695b61fa9f0ee10c8856d9734824039652d"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/EVIDENCE_REVIEW.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/EVIDENCE_REVIEW.md",
+      "sha256": "3455147620ce039ee435c63eee2735025b2977dd0adb368a7a5ea4b7eec53b27"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/METHOD_FRAMEWORK.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/METHOD_FRAMEWORK.md",
+      "sha256": "33353f7a3dcd7a510f1579a4ef206538c6f40a12c0b8f748a9c517a91c029a4c"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/PILOT_PROTOCOL.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/PILOT_PROTOCOL.md",
+      "sha256": "5721dc0214525ee3d83ed47d7d0345b4f118e4e49da0863d008b7a091a6db37f"
+    },
+    {
+      "old_path": ".research-plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/README.md",
+      "new_path": "research/archive/plan-history/agent-managed-focus-20261029/research/method_motivation_20261028/README.md",
+      "sha256": "2f9e85acf1b3ed9c2e325bddddead30bff11c716372e401b04fe7daa260cb8e9"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/RESEARCH_PLAN.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/RESEARCH_PLAN.md",
+      "sha256": "36d4c65756fe6620cfd7bca3f95ebbff560a9864d1ae4a1486cd59fd493fd128"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/BASELINES_AND_BENCHMARKS.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/BASELINES_AND_BENCHMARKS.md",
+      "sha256": "16a900feca5017de2f1df76fe6ea4166c67716e9a45ae74de2178dac7723c3a1"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/DERIVATION.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/DERIVATION.md",
+      "sha256": "9761e0ecbbfc40eb9a896a0f94428b06465c5b6720dc16b4f9f10bca7451b79a"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/EXPERIMENT_PLAN.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/EXPERIMENT_PLAN.md",
+      "sha256": "0a14b5b9af232f2431d17f148505d6be4f76e763885089c81093772d58b7c2c2"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/FINAL_PROPOSAL.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/FINAL_PROPOSAL.md",
+      "sha256": "7911a8d5e3292a2e702c4639fa27e7baa0b08907c0784efc9e6d858d151c400d"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/NOVELTY_CHECK.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/NOVELTY_CHECK.md",
+      "sha256": "60e10c941cd286745d9d866eb4b99dde00327af933f3703d0bfece9cbc22667f"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/PILOT_RESULTS.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/PILOT_RESULTS.md",
+      "sha256": "0f3f5f7262a08aab7e83082b3b1e81190761b8eb41c0cf4c38a17be2ca9e1d6c"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/refine-logs/README.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/refine-logs/README.md",
+      "sha256": "50a19a88eab9ba268e871884384ef468123dec8ff18261d1afee47dd007093a7"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/METHOD_FRAMEWORK.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/METHOD_FRAMEWORK.md",
+      "sha256": "33353f7a3dcd7a510f1579a4ef206538c6f40a12c0b8f748a9c517a91c029a4c"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/PILOT_PROTOCOL.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/PILOT_PROTOCOL.md",
+      "sha256": "5721dc0214525ee3d83ed47d7d0345b4f118e4e49da0863d008b7a091a6db37f"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/README.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/README.md",
+      "sha256": "076239b9af73e18236f5a74dce205fd3662ffcb4727b0768d0457ffd03ddabe2"
+    },
+    {
+      "old_path": ".research-plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/SOURCE_INDEX.md",
+      "new_path": "research/archive/plan-history/before-framework-v4.2026-10-29/research/method_motivation_20261028/SOURCE_INDEX.md",
+      "sha256": "f8ac25e4e59cc30129f0571274100e9a3c3f13a7ae207daa1445a9edcfe2990e"
+    },
+    {
+      "old_path": "scripts/_pilot/results_dilution.jsonl",
+      "new_path": "research/pilot_20261028/raw/results_dilution.jsonl",
+      "sha256": "1947419aca7e8742bfbba988e84396c5c7ba4331166df4dd88cf46ef286fcdc0"
+    },
+    {
+      "old_path": "scripts/_pilot/results_mab_cr.jsonl",
+      "new_path": "research/pilot_20261028/raw/results_mab_cr.jsonl",
+      "sha256": "39ffe85fffddcd6af3dd55cf3ba82609dc660465140be53c81c16f5788336724"
+    },
+    {
+      "old_path": "scripts/_pilot/results_niah.jsonl",
+      "new_path": "research/pilot_20261028/raw/results_niah.jsonl",
+      "sha256": "80706232f859c5bf1ebf40166a0e3f11c5545fcd9bf71cae494ee18808be059a"
+    },
+    {
+      "old_path": "scripts/_pilot/run_cr.log",
+      "new_path": "research/pilot_20261028/raw/run_cr.log",
+      "sha256": "6dbafaa8fc07d00f6dcb1df7e9f781921f12b49a0e55bf9b19c65a24680b00bd"
+    },
+    {
+      "old_path": "scripts/_pilot/run_cr_v2.log",
+      "new_path": "research/pilot_20261028/raw/run_cr_v2.log",
+      "sha256": "3fb8c8e970232f5518bca559da096d22b85c2021a28b0a1ca81dbfd6cb98faa1"
+    },
+    {
+      "old_path": "scripts/_pilot/run_dil.log",
+      "new_path": "research/pilot_20261028/raw/run_dil.log",
+      "sha256": "579411c69594b9439fbad18253c7ec3195bd4e51142b272759105bf66c202d07"
+    },
+    {
+      "old_path": "scripts/_pilot/run_niah.log",
+      "new_path": "research/pilot_20261028/raw/run_niah.log",
+      "sha256": "ee80ef987ea98cb05b478dd2a900fec2fb3c77869ebaf1fb4e64cd30203c5ce5"
+    }
+  ],
+  "note": "Hashes describe contents at move time. Active documentation links were subsequently rebased; historical originals and raw result files were not rewritten."
+}

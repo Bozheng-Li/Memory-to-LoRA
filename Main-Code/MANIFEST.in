@@ -1,0 +1,3 @@
+include configs/mab_sh6k.example.yaml
+recursive-include prompts *.md
+recursive-include tests *.py *.jsonl

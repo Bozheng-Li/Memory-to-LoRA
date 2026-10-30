@@ -1,0 +1,20 @@
+# Minimal env for the D2L native path (v1 pilot).
+# Deliberately excludes vllm / deepspeed / gradio / flask / kagglehub from the
+# upstream pyproject: none are needed before Gate 4, and vllm==0.8.5.post1
+# forces an older torch that conflicts with a CUDA-12.8 stack.
+#
+# Install torch first, matching your driver:
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+torch==2.6.0
+transformers==4.51.3
+peft==0.17.1             # verified with torch 2.6 / transformers 4.51 and _buffer_dict
+accelerate>=1.6,<2
+bitsandbytes>=0.46.1     # the D2L checkpoint uses a quantized context encoder
+datasets>=3.6,<4
+einops
+jaxtyping
+safetensors
+huggingface_hub>=0.32
+pyarrow
+pandas
+numpy

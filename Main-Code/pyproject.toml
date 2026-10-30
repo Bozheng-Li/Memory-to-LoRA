@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "param-memory"
+version = "0.1.0"
+description = "Frozen D2L with agent-managed bounded local and global factual memory"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.10,<3",
+  "PyYAML>=6,<7",
+  "nltk",
+  "tiktoken",
+  "rouge-score",
+  "editdistance",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff", "build"]
+
+[project.scripts]
+param-memory = "param_memory.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+pythonpath = ["src"]
+markers = ["gpu: requires the configured real D2L checkpoint and a GPU"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+

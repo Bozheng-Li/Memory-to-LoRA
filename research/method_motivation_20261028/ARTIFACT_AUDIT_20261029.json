@@ -1,0 +1,667 @@
+{
+  "date": "2026-10-29",
+  "scope": "Read-only audit of existing artifacts; no new model inference",
+  "datasets": {
+    "data/mab/Accurate_Retrieval.parquet": {
+      "file_sha256": "56c3cd80fb6731a3e53cd1a6be3148f54df60ff2d290ee50e28f8acebf9655c1",
+      "rows": 22,
+      "columns": [
+        "context",
+        "questions",
+        "answers",
+        "metadata"
+      ],
+      "exact_unique_contexts": 22,
+      "duplicate_context_row_groups": [],
+      "row_details": [
+        {
+          "row": 0,
+          "context_chars": 985698,
+          "questions": 100,
+          "first_qa_id": "ruler_qa1_197K_no0",
+          "context_sha256": "d6d85ecc896724ed1bca17db169dfb947808adcdc0362598c79194acfbd2faa8"
+        },
+        {
+          "row": 1,
+          "context_chars": 1881772,
+          "questions": 100,
+          "first_qa_id": "ruler_qa2_421K_no0",
+          "context_sha256": "0ee60a212be86fb26f706db99ee3d1ea3fc6c690f9042856c83ea8ed9d8ee754"
+        },
+        {
+          "row": 2,
+          "context_chars": 2306899,
+          "questions": 100,
+          "first_qa_id": "eventqa_full_no0",
+          "context_sha256": "dd607ab7b24b686d6252505a7261f693b0255ad7e62cc4bd716083c0cba6290f"
+        },
+        {
+          "row": 3,
+          "context_chars": 3171853,
+          "questions": 100,
+          "first_qa_id": "eventqa_full_no0",
+          "context_sha256": "b783c42e93add9bc38ddd7a617dc7cb4e7cd1c35bf87cd603ac83a23ca83f325"
+        },
+        {
+          "row": 4,
+          "context_chars": 2591136,
+          "questions": 100,
+          "first_qa_id": "eventqa_full_no0",
+          "context_sha256": "4a190b7aec81123da0609d66517e84be7ceeee4b4c1a59d134fd18d18fd847ea"
+        },
+        {
+          "row": 5,
+          "context_chars": 1694961,
+          "questions": 100,
+          "first_qa_id": "eventqa_full_no0",
+          "context_sha256": "74109788618f5270d7b83af2f0dd0cf8b4a151ed15d39f5e5bb827e2e58f4966"
+        },
+        {
+          "row": 6,
+          "context_chars": 1957500,
+          "questions": 100,
+          "first_qa_id": "eventqa_full_no0",
+          "context_sha256": "6d16dca33a0ca72f8b89e451cbff1dc645da83d365190da55a7d3fa50b758212"
+        },
+        {
+          "row": 7,
+          "context_chars": 285324,
+          "questions": 100,
+          "first_qa_id": "eventqa_65536_no0",
+          "context_sha256": "aea0f2d603e1c8a3afbccc92a6ea3116692155bc3f48aa8ee28144ce8f010c81"
+        },
+        {
+          "row": 8,
+          "context_chars": 285199,
+          "questions": 100,
+          "first_qa_id": "eventqa_65536_no0",
+          "context_sha256": "7e4f8ba209e49061bbaa68059121722b537bdf4024dba63c033fe39d895a6387"
+        },
+        {
+          "row": 9,
+          "context_chars": 279622,
+          "questions": 100,
+          "first_qa_id": "eventqa_65536_no0",
+          "context_sha256": "153a2cce98f93cb34447b24bf0423bb283438d7082b670b8cfb2ea78328a4180"
+        },
+        {
+          "row": 10,
+          "context_chars": 272813,
+          "questions": 100,
+          "first_qa_id": "eventqa_65536_no0",
+          "context_sha256": "ec65b7cb50d7280b85da1116991a736e46f1181e2cf3dfcbf83cdf1f11a03974"
+        },
+        {
+          "row": 11,
+          "context_chars": 282936,
+          "questions": 100,
+          "first_qa_id": "eventqa_65536_no0",
+          "context_sha256": "365235d948f3d1d5b6404e2f3b4943fdeb0e61e5afef2fe04d577dcd72532cd9"
+        },
+        {
+          "row": 12,
+          "context_chars": 573520,
+          "questions": 100,
+          "first_qa_id": "eventqa_131072_no0",
+          "context_sha256": "2bc8ffde99c2c47b4f6f3f4eec15cd604949db6788c1dbf2e3b202632702be70"
+        },
+        {
+          "row": 13,
+          "context_chars": 567840,
+          "questions": 100,
+          "first_qa_id": "eventqa_131072_no0",
+          "context_sha256": "6dc878c847d183ffb3ec6d10e7f3d1d680664d6848eec4e2d0f7be480c16a911"
+        },
+        {
+          "row": 14,
+          "context_chars": 569210,
+          "questions": 100,
+          "first_qa_id": "eventqa_131072_no0",
+          "context_sha256": "21075069be9ce036099840238953e011657f575c528e7900e5d44fba879a50a1"
+        },
+        {
+          "row": 15,
+          "context_chars": 548401,
+          "questions": 100,
+          "first_qa_id": "eventqa_131072_no0",
+          "context_sha256": "13f7b62d03ae1368db57715dc7655dc3ad46e7b714966115e517211505722a41"
+        },
+        {
+          "row": 16,
+          "context_chars": 566706,
+          "questions": 100,
+          "first_qa_id": "eventqa_131072_no0",
+          "context_sha256": "3ef36797263fea917f62ddd7495aeafae52826e2e021c69e9b2e45a4fda1d261"
+        },
+        {
+          "row": 17,
+          "context_chars": 1600183,
+          "questions": 60,
+          "first_qa_id": "longmemeval_s*_no0",
+          "context_sha256": "61ec3a9b2a2e3e8d93ac7b94a5fd44923881e114123f0af8ec3bf427be020f92"
+        },
+        {
+          "row": 18,
+          "context_chars": 1589693,
+          "questions": 60,
+          "first_qa_id": "longmemeval_s*_no0",
+          "context_sha256": "49264170c654189c476f033e84c93e8efb1a3a95d9d499b4e4ac9a7debc518d7"
+        },
+        {
+          "row": 19,
+          "context_chars": 1715268,
+          "questions": 60,
+          "first_qa_id": "longmemeval_s*_no0",
+          "context_sha256": "c2e1809c93430d922a2a022e2dc05b9e35e12d2ee9037af5472b9a2375b90c9d"
+        },
+        {
+          "row": 20,
+          "context_chars": 1588305,
+          "questions": 60,
+          "first_qa_id": "longmemeval_s*_no0",
+          "context_sha256": "df9c9f3f789da3e2b728eaf66415a448a3a8d8513b58656860ff78077a15366b"
+        },
+        {
+          "row": 21,
+          "context_chars": 1646919,
+          "questions": 60,
+          "first_qa_id": "longmemeval_s*_no0",
+          "context_sha256": "6659dbc1344a6c1f31d4d20e6ad08fb37d96f00423b3e80a7601672936e9b295"
+        }
+      ],
+      "limitation": "Exact unique contexts are not independent histories; length variants and source overlap need separate grouping."
+    },
+    "data/mab/Conflict_Resolution.parquet": {
+      "file_sha256": "24d5c3f09ce0ce15625cb9f8a98f44f0d864ca6c94d7b4ad04eb697ca3a5ff45",
+      "rows": 8,
+      "columns": [
+        "context",
+        "questions",
+        "answers",
+        "metadata"
+      ],
+      "exact_unique_contexts": 4,
+      "duplicate_context_row_groups": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          3,
+          7
+        ]
+      ],
+      "row_details": [
+        {
+          "row": 0,
+          "context_chars": 26157,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_mh_6k_no0",
+          "context_sha256": "e46cb14b53eedd71bf92762974a597d46b001157b6b769c03865dee9641818a1"
+        },
+        {
+          "row": 1,
+          "context_chars": 136565,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_mh_32k_no0",
+          "context_sha256": "2a44d6ad3264a775596fe6de01994d6b348280303fdd964f82288e2c476a7409"
+        },
+        {
+          "row": 2,
+          "context_chars": 273473,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_mh_64k_no0",
+          "context_sha256": "e2789821b46e66262caa5dd3bfb94d180576212e81819ec283a3e1dfdeabcf80"
+        },
+        {
+          "row": 3,
+          "context_chars": 1118123,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_mh_262k_no0",
+          "context_sha256": "9c8ce1ed911d25a3c9d52e5758d9a8d23fa769ded88c5e59dbc1e1a3f6eb1f10"
+        },
+        {
+          "row": 4,
+          "context_chars": 26157,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_sh_6k_no0",
+          "context_sha256": "e46cb14b53eedd71bf92762974a597d46b001157b6b769c03865dee9641818a1"
+        },
+        {
+          "row": 5,
+          "context_chars": 136565,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_sh_32k_no0",
+          "context_sha256": "2a44d6ad3264a775596fe6de01994d6b348280303fdd964f82288e2c476a7409"
+        },
+        {
+          "row": 6,
+          "context_chars": 273473,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_sh_64k_no0",
+          "context_sha256": "e2789821b46e66262caa5dd3bfb94d180576212e81819ec283a3e1dfdeabcf80"
+        },
+        {
+          "row": 7,
+          "context_chars": 1118123,
+          "questions": 100,
+          "first_qa_id": "factconsolidation_sh_262k_no0",
+          "context_sha256": "9c8ce1ed911d25a3c9d52e5758d9a8d23fa769ded88c5e59dbc1e1a3f6eb1f10"
+        }
+      ],
+      "limitation": "Exact unique contexts are not independent histories; length variants and source overlap need separate grouping."
+    }
+  },
+  "pilots": {
+    "scripts/_pilot/results_dilution.jsonl": {
+      "sha256": "1947419aca7e8742bfbba988e84396c5c7ba4331166df4dd88cf46ef286fcdc0",
+      "rows": 96,
+      "groups": [
+        {
+          "condition": "text",
+          "target_length": 256,
+          "n": 12,
+          "hit_mean": 1.0,
+          "codes": [
+            "1365-1416",
+            "9205-7915",
+            "7070-9023",
+            "7286-9396",
+            "3961-2500",
+            "5824-8449",
+            "9463-8386",
+            "4565-8550",
+            "4290-6369",
+            "6575-2866",
+            "5370-6978",
+            "8128-7197"
+          ]
+        },
+        {
+          "condition": "d2l",
+          "target_length": 256,
+          "n": 12,
+          "hit_mean": 0.75,
+          "codes": [
+            "2824-5097",
+            "6189-5961",
+            "9215-6375",
+            "5138-2055",
+            "3269-5245",
+            "4595-1789",
+            "9110-7448",
+            "3069-8994",
+            "5476-6097",
+            "6099-8162",
+            "8562-9469",
+            "7509-5427"
+          ]
+        },
+        {
+          "condition": "text",
+          "target_length": 512,
+          "n": 12,
+          "hit_mean": 1.0,
+          "codes": [
+            "8249-1323",
+            "6830-4802",
+            "8526-9627",
+            "9101-9659",
+            "6408-9131",
+            "5164-3129",
+            "5257-4982",
+            "1735-1865",
+            "7295-1952",
+            "4276-7067",
+            "8402-5581",
+            "4623-3185"
+          ]
+        },
+        {
+          "condition": "d2l",
+          "target_length": 512,
+          "n": 12,
+          "hit_mean": 0.16666666666666666,
+          "codes": [
+            "4603-4283",
+            "8511-1104",
+            "3670-5140",
+            "3429-1297",
+            "2691-5148",
+            "4509-2428",
+            "8962-2685",
+            "7779-5426",
+            "8870-6407",
+            "5590-6588",
+            "7542-7095",
+            "5958-9996"
+          ]
+        },
+        {
+          "condition": "text",
+          "target_length": 1024,
+          "n": 12,
+          "hit_mean": 1.0,
+          "codes": [
+            "8298-3166",
+            "8528-1497",
+            "4929-2729",
+            "6586-2990",
+            "3455-1195",
+            "6611-4918",
+            "2549-8846",
+            "3869-2370",
+            "7411-4208",
+            "2451-9426",
+            "9261-9318",
+            "9093-2601"
+          ]
+        },
+        {
+          "condition": "d2l",
+          "target_length": 1024,
+          "n": 12,
+          "hit_mean": 0.08333333333333333,
+          "codes": [
+            "9549-6907",
+            "6770-8710",
+            "2653-6440",
+            "5256-7037",
+            "4340-9907",
+            "5367-8509",
+            "4981-9036",
+            "9209-8825",
+            "7289-8165",
+            "4810-1445",
+            "3490-5902",
+            "2416-9059"
+          ]
+        },
+        {
+          "condition": "text",
+          "target_length": 2048,
+          "n": 12,
+          "hit_mean": 1.0,
+          "codes": [
+            "1571-9813",
+            "4031-9283",
+            "1885-2899",
+            "4927-2184",
+            "3214-3639",
+            "6832-6997",
+            "5760-1111",
+            "3331-3188",
+            "9191-6726",
+            "8988-7815",
+            "3458-8882",
+            "6782-8172"
+          ]
+        },
+        {
+          "condition": "d2l",
+          "target_length": 2048,
+          "n": 12,
+          "hit_mean": 0.08333333333333333,
+          "codes": [
+            "9348-4413",
+            "6578-2950",
+            "4177-8372",
+            "9314-2573",
+            "5589-7521",
+            "6239-8579",
+            "3877-1137",
+            "8159-6333",
+            "9007-1561",
+            "2177-2734",
+            "4949-7448",
+            "6723-2920"
+          ]
+        }
+      ]
+    },
+    "scripts/_pilot/results_mab_cr.jsonl": {
+      "sha256": "39ffe85fffddcd6af3dd55cf3ba82609dc660465140be53c81c16f5788336724",
+      "rows": 175,
+      "groups": [
+        {
+          "condition": "no_memory",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.0,
+          "em_mean": 0.0,
+          "f1_mean": 0.0
+        },
+        {
+          "condition": "text_last2k",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.12,
+          "em_mean": 0.08,
+          "f1_mean": 0.1111111111111111
+        },
+        {
+          "condition": "text_bm25_top4",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.08,
+          "em_mean": 0.08,
+          "f1_mean": 0.09333333333333332
+        },
+        {
+          "condition": "full_context",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.0,
+          "em_mean": 0.0,
+          "f1_mean": 0.013333333333333332
+        },
+        {
+          "condition": "d2l_first2k",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.0,
+          "em_mean": 0.0,
+          "f1_mean": 0.0
+        },
+        {
+          "condition": "d2l_last2k",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.0,
+          "em_mean": 0.0,
+          "f1_mean": 0.0
+        },
+        {
+          "condition": "d2l_bm25_2k",
+          "target_length": null,
+          "n": 25,
+          "subem_mean": 0.0,
+          "em_mean": 0.0,
+          "f1_mean": 0.0
+        }
+      ]
+    },
+    "scripts/_pilot/results_niah.jsonl": {
+      "sha256": "80706232f859c5bf1ebf40166a0e3f11c5545fcd9bf71cae494ee18808be059a",
+      "rows": 120,
+      "groups": [
+        {
+          "condition": "no_memory",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 0.0,
+          "codes": [
+            "6081-2618",
+            "2528-7534",
+            "9322-9016",
+            "5756-4012",
+            "4525-7871",
+            "7095-3793",
+            "7064-2901",
+            "5932-6739",
+            "3653-6608",
+            "8503-2295",
+            "6478-3622",
+            "1001-1637",
+            "9656-2602",
+            "2885-3530",
+            "5768-1145",
+            "5807-2882",
+            "9154-7988",
+            "8348-9005",
+            "2948-9144",
+            "9539-9116"
+          ]
+        },
+        {
+          "condition": "text_full",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 1.0,
+          "codes": [
+            "8707-2087",
+            "9486-2251",
+            "9085-5292",
+            "6779-7736",
+            "9033-2818",
+            "6841-2234",
+            "7809-2030",
+            "3914-1163",
+            "8439-2841",
+            "3407-3051",
+            "7828-3331",
+            "5805-8715",
+            "2417-8918",
+            "5588-1354",
+            "5300-6007",
+            "5788-8247",
+            "9217-6214",
+            "1105-6919",
+            "8131-3425",
+            "7362-1545"
+          ]
+        },
+        {
+          "condition": "text_random",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 0.0,
+          "codes": [
+            "9031-5173",
+            "8433-4159",
+            "5116-5936",
+            "8545-8210",
+            "5571-6768",
+            "3827-7793",
+            "2061-9489",
+            "3896-9363",
+            "6057-1207",
+            "1627-6163",
+            "2004-1402",
+            "7695-7269",
+            "4889-3888",
+            "9132-2468",
+            "1572-9712",
+            "9671-9458",
+            "6645-6950",
+            "2150-9992",
+            "8023-5594",
+            "1595-7744"
+          ]
+        },
+        {
+          "condition": "d2l_full",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 0.1,
+          "codes": [
+            "8342-4878",
+            "1493-9069",
+            "7522-8761",
+            "7658-3328",
+            "2322-3857",
+            "8480-4911",
+            "8398-6501",
+            "3755-6863",
+            "2577-3021",
+            "2312-6465",
+            "7522-1723",
+            "3817-3439",
+            "5062-3258",
+            "8883-7505",
+            "3362-7429",
+            "3337-6859",
+            "6683-3198",
+            "9606-3220",
+            "6677-7394",
+            "7158-2398"
+          ]
+        },
+        {
+          "condition": "d2l_random",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 0.0,
+          "codes": [
+            "1422-3733",
+            "9303-8463",
+            "2122-8833",
+            "7624-9033",
+            "5993-7918",
+            "4746-7126",
+            "6539-9180",
+            "6196-7459",
+            "3124-2908",
+            "8140-4442",
+            "3226-7208",
+            "5168-7180",
+            "8818-8783",
+            "8677-7394",
+            "4495-8231",
+            "9084-4148",
+            "7027-1763",
+            "1250-4341",
+            "5562-4596",
+            "2910-8114"
+          ]
+        },
+        {
+          "condition": "d2l_needle",
+          "target_length": null,
+          "n": 20,
+          "hit_mean": 1.0,
+          "codes": [
+            "6550-9444",
+            "8950-1567",
+            "6140-3104",
+            "8357-2456",
+            "6192-9975",
+            "7941-7135",
+            "9189-5615",
+            "9915-1446",
+            "7750-3749",
+            "7492-5231",
+            "6754-6865",
+            "6718-7237",
+            "8101-5942",
+            "5385-1147",
+            "6780-4417",
+            "9232-2396",
+            "9395-5242",
+            "5296-5524",
+            "4688-1798",
+            "4396-3758"
+          ]
+        }
+      ]
+    }
+  }
+}

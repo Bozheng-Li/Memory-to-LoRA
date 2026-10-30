@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-29",
+  "path_base": "project root",
+  "operation": "same-filesystem directory rename",
+  "moves": [
+    {
+      "old_path": "third_party/doc-to-lora",
+      "new_path": "resources/doc-to-lora",
+      "regular_files_at_move": 139,
+      "regular_file_bytes_at_move": 16258376
+    },
+    {
+      "old_path": "Qwen3-4B-Instruct-2507",
+      "new_path": "resources/models/Qwen3-4B-Instruct-2507",
+      "regular_files_at_move": 14,
+      "regular_file_bytes_at_move": 8060918960
+    },
+    {
+      "old_path": "data",
+      "new_path": "resources/data",
+      "regular_files_at_move": 20,
+      "regular_file_bytes_at_move": 120969681
+    },
+    {
+      "old_path": "checkpoints/qwen_4b_d2l",
+      "new_path": "resources/checkpoints/qwen_4b_d2l",
+      "regular_files_at_move": 2,
+      "regular_file_bytes_at_move": 1684079208
+    }
+  ],
+  "symlink_update": {
+    "path": "resources/doc-to-lora/Qwen/Qwen3-4B-Instruct-2507",
+    "old_target": "../../../Qwen3-4B-Instruct-2507",
+    "new_target": "../../models/Qwen3-4B-Instruct-2507"
+  },
+  "validation": {
+    "unchanged_regular_files": 173,
+    "unchanged_check": "Same device, inode, size and mtime_ns before and after the move. Includes all model weights, checkpoint, dataset payloads, metadata and upstream code.",
+    "edited_resource_files": [
+      "resources/data/mab/README.md",
+      "resources/data/2wikimqa/README.md"
+    ],
+    "historical_files_sha256_verified": 169,
+    "d2l_git_status_unchanged": true,
+    "model_symlink_resolves": true,
+    "base_model_sha256sum_verified_files": 12,
+    "base_model_sha256sum_command": "cd resources && sha256sum -c models/Qwen3-4B-Instruct-2507/SHA256SUMS",
+    "mab_manifest_sha256_verified_files": 6,
+    "mab_metadata_snapshot_sha256_verified": true,
+    "mab_parquet_partitions_decoded": 4,
+    "mab_readme_offline_example_passed": true,
+    "offline_d2l_import_and_qwen_config_tokenizer_passed": true,
+    "python_scripts_syntax_checked": 6,
+    "shell_scripts_syntax_checked": 4,
+    "script_default_paths_checked": 19,
+    "active_documentation_local_links_checked": 109,
+    "script_net_lines_changed": 0,
+    "gpu_evaluation_run": false
+  },
+  "note": "Historical research evidence and earlier manifests retain original paths and bytes. Apply these directory-prefix mappings to locate resources. Active scripts and documentation use the new layout."
+}
