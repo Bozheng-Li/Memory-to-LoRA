@@ -1,7 +1,7 @@
 """接入原生 D2L 的加载、编码、编译、统一组合与完整安装。
 
 模型依赖在构造后端时才导入。张量作为只读产物持有，调用方不能原地修改。
-本模块不选择淘汰对象，不以文本读取或假编译器替代失败的参数后端。
+每个原始 chunk 生成一组原生 rank 的因子，组合时保留全部内容并只加一次共享项。
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ def _readonly(tensors: dict) -> Mapping[str, Mapping[str, Tensor]]:
 
 
 class D2LBackend:
-    """共享一个任务/管理基座，另持实际上下文编码器和冻结 hypernetwork。"""
+    """持有冻结任务基座、实际上下文编码器和冻结 hypernetwork。"""
 
     def __init__(self, config: ModelConfig) -> None:
         """加载本地原生模型并建立实际布局；失败抛 BackendError，不下载替代资源。
@@ -373,7 +373,7 @@ class D2LBackend:
         """用明确模板编码完整消息，带生成前缀；不保留前次 KV。
 
         Args:
-            messages: 任务或管理模式的结构化消息。
+            messages: 任务模式的结构化消息。
 
         Returns:
             含明确聊天模板和 assistant 生成前缀的完整 IDs。
@@ -400,7 +400,7 @@ class D2LBackend:
         """编译一份真实有界输入，返回 checkpoint 精度/设备的单块只读 A/B。
 
         Args:
-            spec: 已校验的真实编译输入，含文本、IDs、指纹和来源版本。
+            spec: 已校验的真实编译输入，含文本、IDs、指纹和来源引用。
 
         Returns:
             尚未加入共享项的单块 RawFactors，不安装参数。
@@ -416,8 +416,8 @@ class D2LBackend:
             raise BackendError("CompileSpec 的 token_ids 与实际上下文编码不一致")
         if spec.input_fingerprint != compile_fingerprint(spec.text, spec.token_ids):
             raise BackendError("CompileSpec 输入指纹不一致")
-        if not spec.text.strip():
-            raise BackendError("不能编译空白文本凑槽")
+        if not spec.text:
+            raise BackendError("不能编译空上下文")
         check_token_limit(spec.token_ids, self.compiler_context_capacity, "上下文编码器输入")
         torch = self._torch
         try:
@@ -459,7 +459,7 @@ class D2LBackend:
         """统一组合所有原始内容块，共享项只加入一次；空序列走纯基座。
 
         Args:
-            blocks: 全部活跃局部与全局的原始内容因子，按编译规格排序。
+            blocks: 全部历史 chunk 的原始内容因子，按编译规格排序。
 
         Returns:
             加入一次共享项的完整组合产物；空集合返回 None，表示纯基座。
@@ -490,7 +490,7 @@ class D2LBackend:
                     }
                     for module in self.layout.modules
                 }
-                # 所有局部和全局原始因子同时组合；每个块不能各自先加一次共享项。
+                # 所有历史 chunk 的原始因子同时组合；每个块不能各自先加一次共享项。
                 combined = self._combine_lora(
                     tensors,
                     torch.tensor([len(blocks)], device=self.device),
@@ -668,7 +668,7 @@ class D2LBackend:
 
         Args:
             input_ids: 当前调用的完整输入，不含旧调用的 KV。
-            generation: 此模式的输入/输出上限及采样选择。
+            generation: YAML 中此模式的输入/输出上限、解码和缓存设置。
 
         Returns:
             只含新生成 tokens 的 GenerationResult，保留原始解码和实际耗时。
@@ -684,15 +684,17 @@ class D2LBackend:
         try:
             with torch.inference_mode():
                 ids = torch.tensor([input_ids], dtype=torch.long, device=self.device)
+                options = import_module("transformers").GenerationConfig(
+                    **generation.model_dump(exclude={"max_input_tokens"}),
+                    pad_token_id=self.tokenizer.pad_token_id,
+                )
                 # 安装已完成组合，不能调用会再次 combine 的上游包装模型 generate。
+                # 禁止模型预设覆盖 YAML；特殊 token ID 仍按真实模型/tokenizer 契约解析。
                 output = self.model.base_model.generate(
                     input_ids=ids,
                     attention_mask=torch.ones_like(ids),
-                    use_cache=True,
-                    cache_implementation=None,
-                    max_new_tokens=generation.max_new_tokens,
-                    do_sample=generation.do_sample,
-                    pad_token_id=self.tokenizer.pad_token_id,
+                    generation_config=options,
+                    use_model_defaults=False,
                 )
                 new_ids = tuple(int(token) for token in output[0, len(input_ids) :].tolist())
                 text = self.tokenizer.decode(new_ids, skip_special_tokens=True)

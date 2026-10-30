@@ -1,5 +1,7 @@
 # 早期测试选型与论文实际指标
 
+> 2026-10-30：本文中的管理方案和实验结果为当时记录；当前实现已改为 [直接 D2L](DIRECT_D2L_FLOW.md)，旧成绩不代表新链路结果。
+
 核查日期：2026-10-29（Asia/Shanghai）。本轮读取现有论文正文、原始 HTML 表格及服务器已有数据/结果审计；**没有启动新模型推理或训练**。以下论文数字是作者报告，不是我们的复现成绩，也不构成完整、实时的 SOTA 排名。
 
 本轮网络搜索连续返回 HTTP 504，因此主要依据已于 2026-10-28 保存的原文。表格逐行提取保存在 [benchmark_tables_20261029.json](../research/method_motivation_20261028/sources/benchmark_tables_20261029.json)；原 HTML 路径和 SHA256 随文件记录。DPPM 引用固定为已保存的 [v1 正文](../research/method_motivation_20261028/sources/dppm.md)。

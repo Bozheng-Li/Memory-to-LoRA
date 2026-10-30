@@ -6,7 +6,7 @@
 import re
 from collections.abc import Iterator
 
-from .budget import check_token_limit, measure_work, prefix_end
+from .budget import check_token_limit, prefix_end
 from .config import MemoryConfig
 from .schema import (
     BudgetExceeded,
@@ -75,17 +75,14 @@ def candidate_from_spans(spans: tuple[SourceSpan, ...], trigger: Trigger) -> Can
         trigger: 调用方已知的维护边界，不参与内容身份计算。
 
     Returns:
-        同事件原样拼接、跨事件加换行的候选；不登记 pending 或分配槽位。
+        原样拼接的连续上下文；不插入分隔符，不登记 pending。
 
     Raises:
         StateError: 来源集合为空。
     """
     if not spans:
         raise StateError("空来源不能形成候选")
-    text = "".join(
-        ("\n" if i and spans[i - 1].event_id != span.event_id else "") + span.text
-        for i, span in enumerate(spans)
-    )
+    text = "".join(span.text for span in spans)
     identity = stable_json([(span.span_id, span.source_hash) for span in spans])
     return Candidate(
         candidate_id=f"c:{text_hash(identity)}",
@@ -100,7 +97,7 @@ def iter_spans(event: Event, max_tokens: int, encode_context: EncodeText) -> Ite
 
     Args:
         event: 已发生的事件；顺序、时间与作用域原样传递。
-        max_tokens: YAML 的单局部块输入上限。
+        max_tokens: YAML 的 chunk 输入上限。
         encode_context: D2L 完整上下文模板编码。
 
     Returns:
@@ -126,9 +123,8 @@ def iter_spans(event: Event, max_tokens: int, encode_context: EncodeText) -> Ite
         text = event.text[start:end]
         check_token_limit(encode_context(text), max_tokens, f"事件 {event.event_id}")
         yield SourceSpan(
-            **event.model_dump(exclude={"text", "boundary"}),
+            **event.model_dump(exclude={"text"}),
             text=text,
-            boundary=event.boundary if end == len(event.text) else None,
             span_id=f"{event.event_id}:{start}:{end}",
             start=start,
             end=end,
@@ -137,34 +133,14 @@ def iter_spans(event: Event, max_tokens: int, encode_context: EncodeText) -> Ite
         start = end
 
 
-def append_span(
-    work: WorkState, span: SourceSpan, limits: MemoryConfig, encode_text: EncodeText
-) -> WorkState:
-    """返回接纳当前片段的新 W；顺序错误或未完成候选抛 StateError。
-
-    超预算抛 BudgetExceeded，调用者须先维护旧窗口，不丢弃新片段。
-
-    Args:
-        work: 旧工作状态；limits.working_tokens 为总上限。
-        span: 当前片段。
-        limits: limits.working_tokens 为总上限。
-        encode_text: 用于真实计账。
-
-    Returns:
-        新的 WorkState，不改变传入 work；已有未完成候选时不得追加第二个候选。
-
-    Raises:
-        StateError: 有未终结候选，或来源、事件身份与顺序不合法。
-        BudgetExceeded: 新片段不能放入 W，调用者必须先维护旧窗口。
-    """
+def append_span(work: WorkState, span: SourceSpan) -> WorkState:
+    """接纳连续片段；未完成 chunk、原文损坏或顺序错误时拒绝且不修改旧状态。"""
     if work.pending_candidate is not None:
         raise StateError("pending_candidate 未终结，不能接收新事件")
     validate_span(span)
     previous = work.recent_spans[-1] if work.recent_spans else work.processed_through
     check_continuation(span, previous)
     result = work.model_copy(update={"recent_spans": (*work.recent_spans, span)})
-    if measure_work(result, encode_text) > limits.working_tokens:
-        raise BudgetExceeded("新片段无法放入 W，须先维护已有未处理内容")
     return result
 
 
@@ -175,52 +151,45 @@ def build_candidate(
 
     Args:
         work: 冻结工作状态。
-        trigger: 事件闭合、窗口满、纠正或历史结束。
+        trigger: chunk 满或历史结束。
         limits: 提供长度上限。
         encode_context: 核对候选整体的实际编译长度。
 
     Returns:
-        Candidate；没有待处理内容时返回 None，不用空字符串编译占槽。
+        Candidate；没有待处理内容时返回 None，不编译空上下文。
 
     Raises:
         StateError: 已有 pending，不能形成第二个候选。
-        BudgetExceeded: 首个未处理片段超过局部编译上限。
+        BudgetExceeded: 首个未处理片段超过 chunk 编译上限。
     """
     if work.pending_candidate is not None:
         raise StateError("已有 pending_candidate，不能形成第二个候选")
     candidate = None
-    for index, span in enumerate(work.recent_spans):
+    for index in range(len(work.recent_spans)):
         proposed = candidate_from_spans(work.recent_spans[: index + 1], trigger)
-        if len(encode_context(proposed.compile_text)) > limits.local_block_tokens:
+        if len(encode_context(proposed.compile_text)) > limits.chunk_tokens:
             break
         candidate = proposed
-        if span.boundary is not None:
-            break
     if candidate is None and work.recent_spans:
         raise BudgetExceeded("首个未处理片段无法装入候选")
     return candidate
 
 
-def finish_candidate(
-    work: WorkState, candidate_id: str, limits: MemoryConfig, encode_text: EncodeText
-) -> WorkState:
+def finish_candidate(work: WorkState, candidate_id: str) -> WorkState:
     """确认已终结候选，推进游标并释放已处理前缀；其余片段原样保留。
 
-    纠正未完成或暂停时由 Runtime 禁止调用。本实现让已处理原文立即离窗，
+    只有编译、安装和前向均成功后才发布此状态。已处理原文立即离窗，
     因而任务端不会借近期原句冒充长期参数读取。
 
     Args:
         work: 含当前 pending 的工作状态。
         candidate_id: 必须匹配该候选。
-        limits: 提供窗口上限。
-        encode_text: 用于真实计账。
 
     Returns:
         推进游标、移除已处理来源的新 W；未处理后缀原样保留。
 
     Raises:
         StateError: 候选身份或未处理前缀不一致。
-        BudgetExceeded: 终结后的工作状态超限。
     """
     candidate = work.pending_candidate
     if candidate is None or candidate.candidate_id != candidate_id:
@@ -236,6 +205,4 @@ def finish_candidate(
             "processed_through": Cursor(order=last.order, end=last.end, event_id=last.event_id),
         }
     )
-    if measure_work(result, encode_text) > limits.working_tokens:
-        raise BudgetExceeded("确认候选后的 W 仍超限")
     return result

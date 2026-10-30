@@ -4,8 +4,10 @@
 """
 
 import hashlib
+import math
 import re
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import ValidationError
@@ -34,38 +36,35 @@ class ModelConfig(FrozenModel):
 
 
 class MemoryConfig(FrozenModel):
-    """两级记忆、工作窗口和一次维护的全部预算。"""
+    """每次直接送入 D2L 的 chunk 上限，包含模板和特殊 token。"""
 
-    local_slots: int
-    global_blocks: int
-    local_block_tokens: int
-    global_block_tokens: int
-    local_card_tokens: int
-    persistent_text_tokens: int
-    working_tokens: int
-    source_read_tokens: int
-    max_manager_calls: int
+    chunk_tokens: int
 
 
 class GenerationConfig(FrozenModel):
-    """一种调用模式的完整输入/输出上限和采样选择。"""
+    """一种调用模式的显式输入/输出上限、解码与单次调用缓存设置。"""
 
     max_input_tokens: int
     max_new_tokens: int
     do_sample: bool
+    temperature: float
+    top_p: float
+    top_k: int
+    repetition_penalty: float
+    num_beams: int
+    use_cache: bool
+    cache_implementation: Nonempty | None
 
 
 class GenerationProfiles(FrozenModel):
-    """共享同一配置类型的任务与管理两种模式。"""
+    """任务生成的显式解码配置。"""
 
     task: GenerationConfig
-    manager: GenerationConfig
 
 
 class PromptConfig(FrozenModel):
-    """两种模式的固定指令模板。"""
+    """任务模式的固定指令模板。"""
 
-    manager_path: Path
     task_path: Path
 
 
@@ -84,6 +83,13 @@ class OutputConfig(FrozenModel):
     directory: Path
 
 
+class LoggingConfig(FrozenModel):
+    """独立日志根目录及过程日志级别；逐条结果不受级别过滤。"""
+
+    directory: Path
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+
 class RunConfig(FrozenModel):
     """只进入入口、运行装配和评测编排的完整配置。"""
 
@@ -95,6 +101,7 @@ class RunConfig(FrozenModel):
     prompts: PromptConfig
     data: DataConfig
     output: OutputConfig
+    logging: LoggingConfig
 
 
 class UniqueKeySafeLoader(yaml.SafeLoader):
@@ -177,16 +184,24 @@ def validate_config(config: RunConfig) -> None:
         raise ConfigError(f"schema_version={config.schema_version}，要求 {SCHEMA_VERSION}")
     if config.experiment.seed < 0:
         raise ConfigError(f"experiment.seed={config.experiment.seed}，要求非负整数")
-    nonnegative = {"local_slots", "global_blocks", "source_read_tokens"}
-    for name, value in config.memory.model_dump().items():
-        lower = 0 if name in nonnegative else 1
-        if value < lower:
-            raise ConfigError(f"memory.{name}={value}，要求整数 >= {lower}")
-    if config.memory.local_slots + config.memory.global_blocks == 0:
-        raise ConfigError("memory.local_slots=0 且 memory.global_blocks=0，至少需要一类容量")
-    for name, profile in (("task", config.generation.task), ("manager", config.generation.manager)):
-        if profile.max_input_tokens <= 0 or profile.max_new_tokens <= 0:
-            raise ConfigError(f"generation.{name}={profile}，输入和输出上限必须为正整数")
+    if config.logging.directory == config.output.directory:
+        raise ConfigError("logging.directory 必须与 output.directory 分开")
+    if config.memory.chunk_tokens <= 0:
+        raise ConfigError(f"memory.chunk_tokens={config.memory.chunk_tokens}，要求正整数")
+    profile = config.generation.task
+    if profile.max_input_tokens <= 0 or profile.max_new_tokens <= 0:
+        raise ConfigError(f"generation.task={profile}，输入和输出上限必须为正整数")
+    for field in ("temperature", "repetition_penalty"):
+        value = getattr(profile, field)
+        if not math.isfinite(value) or value <= 0:
+            raise ConfigError(f"generation.task.{field}={value}，要求有限正数")
+    if not math.isfinite(profile.top_p) or not 0 < profile.top_p <= 1:
+        raise ConfigError(f"generation.task.top_p={profile.top_p}，要求 0 < top_p <= 1")
+    for field, lower in (("top_k", 0), ("num_beams", 1)):
+        if getattr(profile, field) < lower:
+            raise ConfigError(f"generation.task.{field} 要求整数 >= {lower}")
+    if not profile.use_cache and profile.cache_implementation is not None:
+        raise ConfigError("generation.task.cache_implementation 在禁用缓存时必须为 null")
     model = config.model
     if not re.fullmatch(r"cpu|cuda(?::[0-9]+)?", model.device):
         raise ConfigError(f"model.device={model.device!r}，支持 cpu、cuda 或 cuda:设备号")
@@ -219,7 +234,6 @@ def validate_resources(config: RunConfig) -> None:
     files = {
         "model.checkpoint_path": config.model.checkpoint_path,
         "model.chat_template_path": config.model.chat_template_path,
-        "prompts.manager_path": config.prompts.manager_path,
         "prompts.task_path": config.prompts.task_path,
         "data.manifest_path": config.data.manifest_path,
         "data.official_scorer_path": config.data.official_scorer_path,
@@ -236,9 +250,13 @@ def validate_resources(config: RunConfig) -> None:
             raise ConfigError(f"{name} 指向的文件不存在：{path}")
     if not any(config.model.base_model_path.glob("*.safetensors")):
         raise ConfigError(f"model.base_model_path 没有本地 safetensors 权重：{directories}")
-    for parent in (config.output.directory, *config.output.directory.parents):
-        if parent.exists() and not parent.is_dir():
-            raise ConfigError(f"output.directory 的路径组件不是目录：{parent}")
+    for name, directory in (
+        ("output.directory", config.output.directory),
+        ("logging.directory", config.logging.directory),
+    ):
+        for parent in (directory, *directory.parents):
+            if parent.exists() and not parent.is_dir():
+                raise ConfigError(f"{name} 的路径组件不是目录：{parent}")
 
 
 def fingerprint_file(path: Path) -> str:

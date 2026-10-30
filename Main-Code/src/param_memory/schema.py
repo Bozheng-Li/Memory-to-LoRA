@@ -1,7 +1,7 @@
 """定义严格 JSON 边界、不可变状态和项目异常。
 
 记录使用冻结 Pydantic 模型和 tuple；张量只经延迟注解出现在运行报告中。
-公共管理响应的结构是提示生成、解析和校验共用的唯一来源。
+上下文只按 chunk 编译，提交状态不包含槽位、事实表或淘汰计划。
 """
 
 from __future__ import annotations
@@ -13,13 +13,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 if TYPE_CHECKING:
     from .config import RunConfig
     from .d2l import CompiledMemory
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 TokenIds = tuple[int, ...]
 EncodeText = Callable[[str], TokenIds]
 ScoreFn = Callable[[str, tuple[str, ...]], float]
@@ -35,10 +35,6 @@ class ConfigError(ValueError):
 
 class BudgetExceeded(ValueError):
     """实际用量超过声明预算。"""
-
-
-class PlanValidationError(ValueError):
-    """管理响应的结构、身份、来源或动作不合法。"""
 
 
 class BackendError(RuntimeError):
@@ -62,61 +58,31 @@ class FrozenModel(BaseModel):
 class Trigger(str, Enum):
     """输入外壳或工作容量已知的维护边界。"""
 
-    EVENT_END = "event_end"
     WINDOW_FULL = "window_full"
-    CORRECTION = "correction"
     HISTORY_END = "history_end"
-
-
-class RecordKind(str, Enum):
-    """全局记录的事实类别，不表示可信度。"""
-
-    FACT = "fact"
-    CONSTRAINT = "constraint"
-    OBSERVATION = "observation"
-
-
-class RecordStatus(str, Enum):
-    """显式区分现行、历史、未决和无效命题。"""
-
-    ACTIVE = "active"
-    HISTORICAL = "historical"
-    UNRESOLVED = "unresolved"
-    INVALID = "invalid"
-
-
-class LocalStatus(str, Enum):
-    """局部块或全局参数绑定是否允许参与读取。"""
-
-    ACTIVE = "active"
-    DISABLED = "disabled"
 
 
 class MaintenanceStatus(str, Enum):
     """维护终结结果；paused 不确认当前候选。"""
 
     COMMITTED = "committed"
-    SKIPPED = "skipped"
-    ABORTED = "aborted"
     PAUSED = "paused"
 
 
 class Event(FrozenModel):
-    """一次已发生的输入；未知时间保持 None。"""
+    """一次已发生的非空输入，空白原文也保留；未知时间保持 None。"""
 
     event_id: Nonempty
     scope_id: Nonempty
-    text: Nonempty
+    text: Annotated[str, Field(min_length=1)]
     order: Natural
     event_time: str | None
     observed_at: str | None
-    boundary: Trigger | None
 
 
 class SourceSpan(Event):
     """原事件中按 Unicode 码点定位的半开区间。"""
 
-    text: Annotated[str, Field(min_length=1)]
     span_id: Nonempty
     start: Natural
     end: Positive
@@ -132,13 +98,6 @@ class SourceRef(FrozenModel):
     source_hash: Digest
 
 
-class SourceExcerpt(FrozenModel):
-    """补查展示的原文，不改变源片段身份。"""
-
-    ref: SourceRef
-    text: Annotated[str, Field(min_length=1)]
-
-
 class Cursor(FrozenModel):
     """最后处理片段的事件序号及结束字符位置。"""
 
@@ -152,62 +111,17 @@ class Candidate(FrozenModel):
 
     candidate_id: Nonempty
     source_spans: Annotated[tuple[SourceSpan, ...], Field(min_length=1)]
-    compile_text: Nonempty
+    compile_text: Annotated[str, Field(min_length=1)]
     trigger: Trigger
 
 
 class WorkState(FrozenModel):
-    """任务目标、近期观察、摘要和唯一待处理候选。"""
+    """任务目标、尚未编译的上下文和唯一待处理 chunk。"""
 
     goal: Nonempty
     recent_spans: tuple[SourceSpan, ...]
-    summary: str
     pending_candidate: Candidate | None
     processed_through: Cursor | None
-
-
-class LocalBlock(FrozenModel):
-    """固定槽位中的事件来源、编译视图、管理卡和依赖。"""
-
-    block_id: Nonempty
-    slot_id: Natural
-    version: Positive
-    source_refs: Annotated[tuple[SourceRef, ...], Field(min_length=1)]
-    compile_text: Nonempty
-    memory_card: Nonempty
-    claim_refs: tuple[str, ...]
-    status: LocalStatus
-    factor_key: Nonempty
-
-
-class RecordContent(FrozenModel):
-    """完整事实及证据；scope 为当前任务身份，具体条件写入 claim。"""
-
-    kind: RecordKind
-    claim: Nonempty
-    scope: Nonempty
-    valid_from: str | None
-    valid_until: str | None
-    observed_at: str | None
-    status: RecordStatus
-    source_refs: Annotated[tuple[SourceRef, ...], Field(min_length=1)]
-    evidence_group_ids: Annotated[tuple[Nonempty, ...], Field(min_length=1)]
-    support_level: Literal["single_observation", "corroborated", "unresolved"]
-    related_record_ids: tuple[str, ...]
-
-
-class GlobalRecord(RecordContent):
-    """有稳定 ID 和乐观版本的全局管理记录。"""
-
-    record_id: Nonempty
-    version: Positive
-
-
-class ObjectVersion(FrozenModel):
-    """编译输入绑定的记录或局部对象版本。"""
-
-    object_id: Nonempty
-    version: Positive
 
 
 class TensorMetadata(FrozenModel):
@@ -235,194 +149,40 @@ class MaintenanceReceipt(FrozenModel):
     """仅保留最后一次维护的有界身份和结果，不存完整日志。"""
 
     candidate_id: Nonempty
-    plan_id: str | None
     status: MaintenanceStatus
 
 
 class Snapshot(FrozenModel):
-    """完整有界提交状态；None 槽不占内容因子。"""
+    """已提交因子引用及当前工作上下文；历史因子只追加。"""
 
     scope_id: Nonempty
     version: Natural
     work: WorkState
-    local_blocks: tuple[LocalBlock | None, ...]
-    global_records: tuple[GlobalRecord, ...]
-    global_status: LocalStatus
-    sources: tuple[SourceSpan, ...]
     factor_refs: tuple[FactorRef, ...]
     last_maintenance: MaintenanceReceipt | None
 
 
-class Dependency(FrozenModel):
-    """一个来源或记录的真实反向依赖。"""
-
-    key: Nonempty
-    local_block_ids: tuple[str, ...]
-    global_record_ids: tuple[str, ...]
-
-
-class DependencyIndex(FrozenModel):
-    """从快照派生，不能独立编辑的引用索引。"""
-
-    sources: tuple[Dependency, ...]
-    records: tuple[Dependency, ...]
-
-
-class Invalidation(FrozenModel):
-    """优先处理的失效通知，必须引用本次交付的纠正来源。"""
-
-    target_type: Literal["local", "global"]
-    target_id: Nonempty
-    expected_version: Positive
-    source_refs: Annotated[tuple[SourceRef, ...], Field(min_length=1)]
-    reason: Nonempty
-
-
-class ResponseHeader(FrozenModel):
-    """所有管理响应共用的版本和候选身份。"""
-
-    schema_version: int
-    plan_id: Nonempty
-    base_state_version: Natural
-    candidate_id: Nonempty
-
-
-class SourceRead(FrozenModel):
-    """一次有明确 token 上限的在线来源请求。"""
-
-    span_id: Nonempty
-    max_tokens: Positive
-
-
-class SourceRequest(ResponseHeader):
-    """管理器请求补查来源，不授权读取任何文件。"""
-
-    response_type: Literal["source_request"]
-    source_requests: Annotated[tuple[SourceRead, ...], Field(min_length=1)]
-
-
-class GlobalUpsert(RecordContent):
-    """新增用 alias；修订用 record_id 和 expected_version。"""
-
-    alias: Nonempty | None
-    record_id: Nonempty | None
-    expected_version: Positive | None
-
-
-class GlobalDelete(FrozenModel):
-    """带版本和明确遗忘原因的全局删除。"""
-
-    record_id: Nonempty
-    expected_version: Positive
-    reason: Nonempty
-
-
-class LocalRevision(FrozenModel):
-    """修订真实编译文本及来源，不能只修改管理卡。"""
-
-    block_id: Nonempty
-    expected_version: Positive
-    compile_text: Nonempty
-    memory_card: Nonempty
-    source_refs: Annotated[tuple[SourceRef, ...], Field(min_length=1)]
-
-
-class LocalExit(FrozenModel):
-    """明确退出的局部块，不因目标槽被选中而隐式删除。"""
-
-    block_id: Nonempty
-    expected_version: Positive
-    reason: Nonempty
-
-
-class ExitDependency(FrozenModel):
-    """退出前需成立的全局记录及明确放弃的细节。"""
-
-    block_id: Nonempty
-    required_global_ids: tuple[str, ...]
-    discarded_content: str
-
-
-class MemoryPlan(ResponseHeader):
-    """联合接纳、巩固、修订、退出计划，仅表示管理意图。"""
-
-    response_type: Literal["plan"]
-    admission: Literal["local", "global_only", "skip"]
-    target_slot: Natural | None
-    candidate_card: str | None
-    global_upserts: tuple[GlobalUpsert, ...]
-    global_deletes: tuple[GlobalDelete, ...]
-    local_revisions: tuple[LocalRevision, ...]
-    local_exits: tuple[LocalExit, ...]
-    exit_dependencies: tuple[ExitDependency, ...]
-    invalidations: tuple[Invalidation, ...]
-    reason: Nonempty
-
-
-ManagerReply = Annotated[SourceRequest | MemoryPlan, Field(discriminator="response_type")]
-MANAGER_REPLY_ADAPTER = TypeAdapter(ManagerReply)
-
-
-class ValidationFeedback(FrozenModel):
-    """交给下次管理调用的错误，不包含离线日志。"""
-
-    code: Nonempty
-    field: Nonempty
-    message: Nonempty
-
-
-class SourceReadResult(FrozenModel):
-    """按请求顺序交付的原文片段及实际 token 消耗。"""
-
-    excerpts: tuple[SourceExcerpt, ...]
-    tokens_used: Natural
-
-
-class StagedUpdate(FrozenModel):
-    """纯函数得到的候选状态，发布前不影响任务。"""
-
-    base_version: Natural
-    snapshot: Snapshot
-    changed_local_ids: tuple[str, ...]
-    global_changed: bool
-
-
 class CompileSpec(FrozenModel):
-    """精确编译文本、真实 token IDs 和当前来源/记录绑定。"""
+    """一段原始上下文的精确文本、token IDs、来源及指纹。"""
 
     block_key: Nonempty
-    kind: Literal["local", "global"]
-    text: Nonempty
+    text: Annotated[str, Field(min_length=1)]
     token_ids: TokenIds
     source_refs: tuple[SourceRef, ...]
-    record_versions: tuple[ObjectVersion, ...]
     input_fingerprint: Digest
 
 
 class BudgetUsage(FrozenModel):
     """完整稳态用量；没有张量产物时参数计数为零。"""
 
-    local_slots: Natural
-    slot_capacity: Natural
-    global_blocks: Natural
-    local_input_tokens: tuple[int, ...]
-    global_input_tokens: tuple[int, ...]
-    local_card_tokens: tuple[int, ...]
+    compiled_chunks: Natural
+    chunk_input_tokens: tuple[int, ...]
     persistent_text_tokens: Natural
     persistent_text_bytes: Natural
     working_tokens: Natural
     working_bytes: Natural
     content_width: Natural
     factor_bytes: Natural
-
-
-class ValidatedPlan(FrozenModel):
-    """经过所有纯状态检查的实际更新和编译输入。"""
-
-    plan: MemoryPlan
-    update: StagedUpdate
-    specs: tuple[CompileSpec, ...]
-    usage: BudgetUsage
 
 
 class ChatMessage(FrozenModel):
@@ -450,10 +210,6 @@ class GenerationResult(FrozenModel):
 class MaintenanceCost(FrozenModel):
     """一次维护的累计计数；零是未发生操作而非业务默认值。"""
 
-    manager_input_tokens: int = 0
-    manager_output_tokens: int = 0
-    manager_seconds: float = 0.0
-    source_read_tokens: int = 0
     compile_calls: int = 0
     compile_input_tokens: int = 0
     compile_seconds: float = 0.0
@@ -468,19 +224,16 @@ class MaintenanceCost(FrozenModel):
 
 
 class MaintenanceResult(FrozenModel):
-    """交给评测外壳的完整维护结果，永不回灌给 Agent。"""
+    """交给评测外壳的 chunk 编译结果，永不回灌到上下文。"""
 
     status: MaintenanceStatus
     candidate_id: Nonempty
-    plan_id: str | None
     base_version: Natural
     final_version: Natural
     reason: str
     errors: tuple[str, ...]
-    manager_calls: Natural
     cost: MaintenanceCost
     elapsed_seconds: float
-    replies: tuple[str, ...]
 
 
 class EvalCase(FrozenModel):
@@ -550,13 +303,13 @@ def text_hash(text: str) -> str:
 
 
 def compile_fingerprint(text: str, token_ids: TokenIds) -> str:
-    """绑定真实文本和完整输入 IDs；来源版本另外保存在 CompileSpec 中。
+    """绑定真实文本和完整输入 IDs；来源引用另外保存在 CompileSpec 中。
 
     Args:
         text: 实际编译视图。
         token_ids: 对应的完整模板化输入 IDs。
 
     Returns:
-        绑定文本及输入 IDs 的指纹；来源与记录版本在 CompileSpec 中另行绑定。
+        绑定文本及输入 IDs 的指纹；来源引用在 CompileSpec 中另行绑定。
     """
     return text_hash(stable_json({"text": text, "token_ids": token_ids}))

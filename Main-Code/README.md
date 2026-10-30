@@ -1,48 +1,87 @@
-# 有界局部与全局参数记忆
+# 直接 D2L 参数记忆
 
-按 [HIGH_LEVEL_DESIGN.md](../docs/HIGH_LEVEL_DESIGN.md) 实现同一冻结基座的任务/管理模式、
-有界工作窗口、局部事件记忆、全局事实记录和原生 D2L 参数读取。首版不训练模型。
-管理器只输出计划；来源、版本、依赖和最终预算通过校验，且安装与真实前向成功后，
-Runtime 才发布新状态。纠正失败只能恢复不包含已知错误的安全子集。
+执行过程中的连续上下文达到 chunk 边界后，直接生成当前 checkpoint 的 rank=8 LoRA，
+将新因子追加到全部历史因子并安装，用于后续推理。历史尾段也会编译。
+方法见 [直接 D2L 说明](../docs/DIRECT_D2L_FLOW.md)，模块与接口见 [高层设计](../docs/HIGH_LEVEL_DESIGN.md)。
 
-## 安装和运行
+## 安装与运行
 
-使用 Python 3.10。先在项目根目录按 [requirements-d2l.txt](../requirements-d2l.txt)
-安装 D2L 依赖，再安装本包的新增依赖和开发工具：
+使用 Python 3.10 及项目 [requirements-d2l.txt](../requirements-d2l.txt) 对应环境：
 
 ```bash
 cd Main-Code
 python -m pip install -e '.[dev]'
-cp configs/mab_sh6k.example.yaml configs/mab_sh6k.yaml
 python -m param_memory validate-config --config configs/mab_sh6k.yaml
 python -m param_memory run-mab --config configs/mab_sh6k.yaml
 ```
 
-已存在实际配置时直接修改它，不覆盖自己的参数。所有可编辑运行参数只在 YAML 中，
-相对路径以 YAML 所在目录为基准。`validate-config` 检查结构和本地资源，不加载模型。
-当前 checkpoint 带量化上下文编码器，完整运行需要已分配的 CUDA 设备；
-登录节点可执行纯状态测试和数据检查。代码不会回退到另一模型、注意力实现或文本记忆。
+新环境可从 `configs/mab_sh6k.example.yaml` 创建配置；已有配置直接修改，不覆盖自己的参数。
+当前 checkpoint 带量化上下文编码器，真实编译与推理需要已分配的 CUDA 设备。
+`validate-config` 只校验 YAML 和本地资源，不加载模型或下载替代资源。
 
-`model.d2l_root`、checkpoint、基座、tokenizer、聊天模板和官方评分源码都从既有资源读取，
-不复制到 Python 包。D2L 张量 rank、目标模块、层数、精度和 scale 从实际 checkpoint 派生。
-通过构造期限定的原生加载边界，基座和上下文编码器都使用配置中的设备和注意力实现；
-原生模型只构造一次，再严格加载 hypernetwork，避免上游 `from_state_dict` 的二次重建。
+## 唯一写入规则
 
-## 实现约定
+```yaml
+schema_version: 2
+memory:
+  chunk_tokens: 2048
+```
 
-- 工作窗口包含候选的元数据、来源副本和编译文本；接收下一片前检查候选容量。
-  候选终结后已处理原文立即离窗，剩余未处理前缀继续保留。
-- `scope` 是当前历史/任务 ID；具体服务、环境和成立条件必须写在 `claim` 中。
-  `source_refs.start/end` 是原事件的 Unicode 码点位置，hash 对应完整来源片段。
-- `local_blocks` 是固定槽位 tuple，空槽为 `None`；禁用块仍占槽位和文本预算。
-  全局记录按稳定 ID 排序，完整记录按含模板的长度做 next-fit 装箱。
-- 一个维护事务的首次生成、补查、JSON 修复、预算修复、纠正后重提共享调用上限。
-  有效失效通知先提交安全状态，再要求新的版本号；旧响应的普通动作不会被自动沿用。
-- 原始内容因子和组合因子分开存储。共享项仅在统一组合时加入一次；
-  安装后直接调用 `base_model.generate`，顶层调用间不保留 KV。
-- MAB 入口按 `metadata.source` 筛选，并把固定版本行号用作校验。
-  当前 manifest 的单历史选择项可用；多历史选择会明确拒绝。
-  writer 只接收 context，冻结后逐题读取相同快照，gold 仅用于官方评分。
+上限包含真实 D2L 模板和特殊 token。跨事件保持原文顺序，不摘要、不改写；
+当下一完整片段无法放入时，先编译已积累前缀，因此部分 chunk 会略小于上限。
+上下文编码器的实际容量在模型加载后检查，超大事件由 `iter_spans` 无损分片。
+原文及真实 token IDs 分别记录；原生 D2L 编码按其模板规则去掉首尾空白。
+仅含空白的非空尾段仍可编译，完整来源原文保留在记录中。
+
+每个 chunk 只生成一组原始 rank-8 因子。8 个 chunk 的内容宽度是 64，加一次共享项后为 72；
+第 9 个 chunk 后分别为 72 和 80。因子随历史增加，未设置固定数量或替换策略。
+编译、安装与前向均成功后，才发布新版本并移走已编译的工作上下文；失败保留原文并暂停。
+
+全局槽位、局部队列、管理器、计划协议及其提示和预算已从主链路删除。
+`generation` 只保留 `task`，`prompts` 只保留 `task_path`。旧 YAML 字段会被拒绝，
+仓库三个配置已迁移，其中 `mab_sh6k_budget512_baseline.yaml` 使用 chunk=512。
+所有运行参数在 YAML 中显式指定，相对路径按 YAML 所在目录解析。
+
+任务解码仍由 `generation.task` 明确控制，不继承模型目录中会覆盖本次配置的生成预设。
+缓存配置只影响单次生成，顶层调用间不保留 KV。rank、层、模块维度和 scale 来自实际 checkpoint。
+
+## 任务与评测
+
+`MemoryRuntime(initial, backend, config)` 接收空历史；通过 `observe` 写入已发生上下文，
+通过 `answer` 携带当前累积 LoRA 推理。`empty_snapshot(scope_id, goal)` 不再接收槽位数量。
+
+MAB 入口按 `metadata.source` 和固定 revision 选择单份历史，保持事实序号及原文顺序；
+历史结束时编译全部尾段并冻结，所有问题读取同一版本。gold 只用于官方评分。
+编译后的原文仍保存在编译记录中用于复现，不再拼回任务 prompt，也不读取其它题的答案。
+
+## 日志和产物
+
+日志写入 YAML 的 `logging.directory/<run_id>/`，与最终结果目录分开：
+
+| 日志文件 | 内容 |
+| --- | --- |
+| `run.log` | 编译、组合、安装、前向、答题、评分等阶段及耗时和异常 |
+| `resolved_config.yaml` | 启动时保存的完整配置 |
+| `maintenance.jsonl` | 每个 chunk 的提交版本、结果、错误和真实成本 |
+| `predictions.jsonl` | 逐题回答、分数、版本和错误 |
+
+每个 chunk 或问题完成后立即追加记录。日志级别不影响结果 JSONL，已有目录不会被覆盖。
+管理回复、计划和管理调用计数不再出现在新日志协议中。
+
+最终产物写入 `output.directory/<run_id>/`：
+
+| 文件 | 内容 |
+| --- | --- |
+| `resolved_config.yaml` | 解析后的运行配置 |
+| `manifest.json` | 代码、模型、数据、任务提示指纹和完整编译输入 |
+| `metrics.json` | 官方分数、失败分母、成本、chunk 数、内容宽度和占用 |
+| `final_snapshot.json` | 最后版本、剩余工作上下文、全部因子引用 |
+| `memory.safetensors` | 全部原始 A/B 和加入一次共享项的组合 A/B |
+
+`manifest.artifacts_complete=true` 仅表示文件已写完，执行结果仍以 `status` 为准。
+`official_mean_scored` 只统计完成评分的题，`failure_inclusive_score` 使用全部题目作分母。
+`memory_usage.compiled_chunks` 和 `allocated_width` 分别报告 chunk 数和含共享项的宽度，
+同时报告实际因子字节、暂存峰值及可用时的 CUDA 峰值。
 
 ## 检查
 
@@ -52,45 +91,15 @@ python -m ruff check src tests
 python -m build
 ```
 
-测试替身只存在于 `tests/`。真实模型测试单独执行，并设置外部硬期限：
+断网节点已安装满足 `pyproject.toml` 要求的 `setuptools` 和 `wheel` 时，使用
+`python -m build --no-isolation`，直接复用当前环境完成构建。
+
+真实 checkpoint 集成测试需要显式配置和 CUDA：
 
 ```bash
 timeout 1800s python -m pytest tests/integration -q \
   --d2l-config configs/mab_sh6k.yaml
 ```
 
-未提供模型配置时集成测试明确跳过；没有 GPU 不算模型验证通过。
-集成测试检查真实因子方向/scale、共享项次数、reset、重复安装和重建一致性。
-测试是否完成及实测结果见 [IMPLEMENTATION.md](../docs/IMPLEMENTATION.md)，
-配置样例不是已经验证过的事实记忆质量结论。
-
-## 运行产物
-
-每次运行在 `output.directory/<run_id>/` 创建新目录，拒绝覆盖：
-
-| 文件 | 内容 |
-| --- | --- |
-| `resolved_config.yaml` | 解析后的绝对路径配置，仅用于复现 |
-| `manifest.json` | 代码/数据/模板/模型指纹、固定版本声明、执行状态和编译输入绑定 |
-| `maintenance.jsonl` | 所有维护的身份、原始管理响应、失败、调用数和实际可观测成本 |
-| `predictions.jsonl` | 逐题原始回答、官方分数、快照版本和错误 |
-| `metrics.json` | 全部题目分母、成功/失败/未尝试数、成本、稳态和暂存占用 |
-| `final_snapshot.json` | 最后状态、在线来源和因子引用 |
-| `memory.safetensors` | `raw.<block_key>.<module>.A/B` 与 `combined.<module>.A/B` |
-
-`official_mean_scored` 只对实际完成评分的题求均值；完全未运行时为 `null`。
-`failure_inclusive_score` 使用全部题目的分母，未完成题没有伪造的逐题分数。
-`manager_calls_without_returned_usage` 标出没有返回 token 用量的失败调用，
-此时成本表仅包含已知用量。`peak_staged_factor_bytes` 是共存原始/组合张量的占用，
-另列 CUDA 实测峰值；模型驻留项报告参数/缓冲区字节，CUDA 峰值还包含其它运行分配。
-`manifest.artifacts_complete=true` 表示文件已写完；执行是否成功看 `status`，
-暂停/失败的状态不能当作可回答问题的完整记忆。
-
-## 模块职责与代码规模
-
-这是从单个 YAML 样例建立完整实现。超过 80 行的新增业务文件分别承载：
-`schema.py` 的严格数据契约，`config.py` 的配置/资源边界，`budget.py` 的统一计账，
-`events.py` 的原文与游标，`state.py` 的来源依赖/状态推导，`planning.py` 的计划校验，
-`manager.py` 的管理提示，`d2l.py` 的实际模型/张量契约，`runtime.py` 的事务与恢复，
-`evaluation.py` 的协议隔离、官方评分和结果落盘。测试文件按这些可观察契约组织。
-较长的事务/装配函数在 docstring 中说明保持步骤集中以保证哪些不变量。
+缺少配置或 CUDA 时测试明确跳过，不能算作模型验证通过。本轮验证记录和限制见
+[实现说明](../docs/IMPLEMENTATION.md)。本阶段只建立最小直接 D2L 链路，记忆质量留待真实评测。

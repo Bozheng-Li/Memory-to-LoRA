@@ -1,0 +1,76 @@
+% Memory-to-LoRA 直接 D2L 主链路流程图（TikZ 源码）
+%
+% 重新生成（需 tectonic）：
+%   tectonic -X compile pipeline.tex
+%   python -c "import pymupdf;d=pymupdf.open('pipeline.pdf')[0];d.get_pixmap(dpi=300).save('pipeline.png')"
+\documentclass[border=6pt]{standalone}
+\usepackage{ctex}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,calc}
+
+\definecolor{inputfill}{gray}{0.96}
+\definecolor{decidefill}{RGB}{253,240,214}
+\definecolor{compilefill}{RGB}{226,238,250}
+\definecolor{factorfill}{RGB}{228,244,231}
+\definecolor{publishfill}{RGB}{250,231,228}
+
+\begin{document}
+\begin{tikzpicture}[
+  >={Stealth[length=2.2mm,width=1.6mm]},
+  every node/.style={font=\small},
+  box/.style={
+    draw=black!55, rounded corners=2pt, align=center, inner sep=4pt,
+    text width=50mm, minimum height=11mm, line width=0.5pt, fill=white
+  },
+  dec/.style={
+    draw=black!55, diamond, aspect=2.9, align=center, inner sep=1pt,
+    text width=26mm, minimum height=15mm, line width=0.5pt, fill=decidefill
+  },
+  lab/.style={font=\footnotesize, fill=white, inner sep=1.5pt},
+  flow/.style={->, line width=0.6pt},
+  loop/.style={->, line width=0.6pt, draw=black!70},
+  note/.style={font=\scriptsize, text=black!60, align=center}
+]
+
+% ---- 左列：观察与编译 ----
+\node[box, fill=inputfill] (E) at (0,0) {执行上下文\\[1pt]
+  {\footnotesize 已发生的原文片段按序到达}};
+\node[box, fill=inputfill] (W) at (0,-1.95) {工作上下文\\[1pt]
+  {\footnotesize 保留原文与真实 token IDs}};
+\node[dec] (C) at (0,-3.95) {达到\\chunk 边界？};
+\node[box, fill=compilefill] (D) at (0,-5.95) {冻结 D2L 编译\\[1pt]
+  {\footnotesize 生成 rank=8 的 A/B 因子}};
+
+% ---- 右列：因子、发布与推理（自下而上）----
+\node[box, fill=factorfill] (A) at (8.6,-5.95) {追加到全部历史因子\\[1pt]
+  {\footnotesize 内容宽度 $N\times8$}};
+\node[box, fill=factorfill] (M) at (8.6,-3.95) {原生统一组合\\[1pt]
+  {\footnotesize 共享项只加一次，$(N+1)\times8$}};
+\node[box, fill=publishfill] (I) at (8.6,-1.95) {安装并做一次真实前向校验};
+\node[box, fill=publishfill] (P) at (8.6,0) {原子发布 $v\to v+1$\\[1pt]
+  {\footnotesize 释放已编译的工作上下文}};
+\node[box, fill=inputfill] (T) at (8.6,1.95) {携带累积 LoRA 继续推理\\[1pt]
+  {\footnotesize 答题或等待后续上下文}};
+
+% ---- 主链路 ----
+\draw[flow] (E) -- (W);
+\draw[flow] (W) -- (C);
+\draw[flow] (C) -- node[lab, right=1.5mm] {是} (D);
+\draw[flow] (D) -- node[lab, above=1mm] {编译成功，提交本 chunk} (A);
+\draw[flow] (A) -- (M);
+\draw[flow] (M) -- (I);
+\draw[flow] (I) -- (P);
+\draw[flow] (P) -- (T);
+
+% ---- 循环 1：未满一个 chunk 继续累积 ----
+\draw[loop] (C.west) -- ++(-2.1,0) |- node[lab, near start, below=0.5mm] {未满，继续累积} (W.west);
+
+% ---- 循环 2：新上下文触发下一轮 ----
+\draw[loop] (T.north) -- ++(0,1.15) -| node[lab, pos=0.78, above=0.5mm] {下一条上下文} (E.north);
+
+% ---- 失败分支说明 ----
+\node[note, below=4mm of D, text width=52mm] {编译、组合、安装或前向任一环节失败：\\
+  保留待处理原文与上一版全部因子，暂停交付};
+
+\end{tikzpicture}
+\end{document}

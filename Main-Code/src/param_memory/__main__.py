@@ -20,7 +20,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     Returns:
         只包含命令名称和配置路径的 Namespace，不夹带另一套业务默认值。
     """
-    parser = argparse.ArgumentParser(description="Agent 管理的有界局部/全局参数记忆")
+    parser = argparse.ArgumentParser(description="按 chunk 直接编译并累积的 D2L 参数记忆")
     commands = parser.add_subparsers(dest="command", required=True)
     for command in ("validate-config", "run-mab"):
         action = commands.add_parser(command)
@@ -45,21 +45,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         config = load_config(args.config)
         validate_config(config)
-        validate_resources(config)
         if args.command == "validate-config":
+            validate_resources(config)
             logger.info("配置和本地资源校验通过：%s", args.config.resolve())
             return 0
         # 配置校验命令不导入模型/评测依赖。
-        from .evaluation import run_mab, write_run_report
+        from .evaluation import run_mab
 
         phase = "run-mab"
         report = run_mab(config)
-        phase = "write-run-report"
-        write_run_report(report, config.output.directory)
-        logger.info("运行状态 %s；产物：%s", report.status, config.output.directory / report.run_id)
         return 0 if report.status == "completed" else 1
     except (ConfigError, BackendError, BudgetExceeded, EvaluationError, StateError, OSError) as exc:
-        logger.error("阶段 %s 失败：%s", phase, exc)
+        logger.exception("阶段 %s 失败：%s", phase, exc)
         return 1
 
 

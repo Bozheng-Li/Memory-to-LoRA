@@ -24,10 +24,10 @@ import yaml
 
 from . import __version__
 from .budget import measure_snapshot
-from .config import RunConfig, fingerprint_file
+from .config import RunConfig, fingerprint_file, validate_resources
 from .d2l import D2LBackend, empty_compiled
 from .events import build_candidate, iter_spans
-from .manager import AgentManager
+from .run_logging import append_jsonl, log_context, log_phase, run_logging
 from .runtime import MemoryRuntime
 from .schema import (
     BackendError,
@@ -75,7 +75,7 @@ def load_eval_case(manifest_path: Path, selection: str) -> EvalCase:
         selection: 来自 data.selection，必须是 manifest 中真实存在的选择项。
 
     Returns:
-        EvalCase；包含答案的对象只由评测外壳持有，不传给 Runtime 或 AgentManager。
+        EvalCase；包含答案的对象只由评测外壳持有，不传给 Runtime 或 D2L 编译器。
 
     Raises:
         EvaluationError: 读取本地 JSON/Parquet；版本、选择或结构错误抛 EvaluationError，不按猜测行号
@@ -173,7 +173,6 @@ def iter_history_events(case: EvalCase) -> Iterator[Event]:
             order=order,
             event_time=None,
             observed_at=None,
-            boundary=None,
         )
         previous, start = match, match.start()
     yield Event(
@@ -183,7 +182,6 @@ def iter_history_events(case: EvalCase) -> Iterator[Event]:
         order=int(previous.group(1)),
         event_time=None,
         observed_at=None,
-        boundary=None,
     )
 
 
@@ -256,15 +254,12 @@ def score_prediction(prediction: str, answers: tuple[str, ...], scorer: ScoreFn)
     return result
 
 
-def _consume_history(
-    case: EvalCase, runtime: MemoryRuntime, records: list[MaintenanceResult]
-) -> None:
+def _consume_history(case: EvalCase, runtime: MemoryRuntime) -> None:
     """逐片交付历史，循环收尾有限剩余前缀；暂停后停止交付新事件。
 
     Args:
         case: 外壳持有的数据；只取 context 与合法来源身份。
         runtime: 当前历史的运行时。
-        records: 外壳维护列表，按发生顺序追加结果。
 
     Returns:
         None；完整消费历史后冻结，或在暂停时停止交付。
@@ -274,12 +269,13 @@ def _consume_history(
         BudgetExceeded: 单个片段无法放入声明的容量。
     """
     for event in iter_history_events(case):
-        for span in iter_spans(
-            event, runtime.limits.local_block_tokens, runtime.backend.encode_context
-        ):
-            records.extend(runtime.observe(span))
-            if runtime.status == "paused":
-                return
+        with log_context(event_id=event.event_id, event_order=event.order):
+            for span in iter_spans(
+                event, runtime.limits.chunk_tokens, runtime.backend.encode_context
+            ):
+                runtime.observe(span)
+                if runtime.status == "paused":
+                    return
     while runtime.status == "ready":
         candidate = build_candidate(
             runtime.snapshot.work,
@@ -288,40 +284,60 @@ def _consume_history(
             runtime.backend.encode_context,
         )
         if candidate is None:
-            runtime.freeze()
+            with log_phase(logger, "freeze"):
+                runtime.freeze()
             return
-        records.append(runtime.maintain(candidate))
+        runtime.maintain(candidate)
 
 
 def _answer_questions(
-    case: EvalCase, runtime: MemoryRuntime, scorer: ScoreFn
-) -> tuple[Prediction, ...]:
+    case: EvalCase,
+    runtime: MemoryRuntime,
+    scorer: ScoreFn,
+    predictions: list[Prediction],
+    log_dir: Path,
+) -> None:
     """逐题读取同一冻结快照，失败题保留 None 分数，不把任何回答回写历史。
 
     Args:
         case: 与冻结历史对应的题组。
         runtime: 已冻结的运行时。
         scorer: 固定官方评分函数。
+        predictions: 外壳持有的已完成结果；后续问题失败不会清空已有记录。
+        log_dir: 当前运行独立日志目录。
 
     Returns:
-        逐题 Prediction；单题失败保留 None 分数及原始错误。
+        None；逐题追加 Prediction 并立即落盘，单题失败保留 None 分数及原始错误。
 
     Raises:
         StateError: 调用期间快照或冻结状态发生变化。
+
+    Notes:
+        每题的版本检查、推理和落盘集中执行，保证后续题故障不会丢失已完成结果。
     """
     frozen = runtime.snapshot
-    predictions = []
-    for question, answers, qa_id in zip(case.questions, case.answers, case.qa_ids, strict=True):
-        if runtime.status != "frozen" or runtime.snapshot != frozen:
-            raise StateError("所有问题必须读取完全相同的冻结版本与 W")
-        generation, score, error = None, None, None
-        try:
-            generation = runtime.answer(question)
-            score = score_prediction(generation.text, answers, scorer)
-        except (BackendError, BudgetExceeded, EvaluationError) as exc:
-            error = str(exc)
-        predictions.append(
-            Prediction(
+    questions = zip(case.questions, case.answers, case.qa_ids, strict=True)
+    for index, (question, answers, qa_id) in enumerate(questions, start=1):
+        with log_phase(
+            logger,
+            "question",
+            history_id=case.history_id,
+            question_id=qa_id,
+            question_index=index,
+            total_questions=len(case.questions),
+            snapshot_version=frozen.version,
+        ):
+            if runtime.status != "frozen" or runtime.snapshot != frozen:
+                raise StateError("所有问题必须读取完全相同的冻结版本与 W")
+            generation, score, error = None, None, None
+            try:
+                generation = runtime.answer(question)
+                with log_phase(logger, "score"):
+                    score = score_prediction(generation.text, answers, scorer)
+            except (BackendError, BudgetExceeded, EvaluationError) as exc:
+                error = str(exc)
+                logger.exception("question failed")
+            prediction = Prediction(
                 history_id=case.history_id,
                 question_id=qa_id,
                 snapshot_version=frozen.version,
@@ -331,8 +347,8 @@ def _answer_questions(
                 score=score,
                 error=error,
             )
-        )
-    return tuple(predictions)
+            append_jsonl(log_dir / "predictions.jsonl", prediction)
+            predictions.append(prediction)
 
 
 def _run_metrics(
@@ -380,10 +396,6 @@ def _run_metrics(
         "maintenance_counts": {
             status.value: sum(r.status == status for r in records) for status in MaintenanceStatus
         },
-        "manager_calls": sum(r.manager_calls for r in records),
-        "manager_calls_without_returned_usage": sum(
-            r.manager_calls - len(r.replies) for r in records
-        ),
         "maintenance_cost_observed": costs,
         "task_input_tokens": sum(p.generation.input_tokens for p in predictions if p.generation),
         "task_output_tokens": sum(p.generation.output_tokens for p in predictions if p.generation),
@@ -403,30 +415,55 @@ def _run_metrics(
 
 
 def run_mab(config: RunConfig) -> RunReport:
-    """设种子、装配、流式维护、冻结和官方评分，保留可报告失败及完整分母。
+    """在独立日志生命周期内校验资源、执行评测并写最终报告。
 
     Args:
-        config: 已通过配置和资源校验。
+        config: 已通过配置结构和数值校验；日志在资源检查及模型加载前创建。
 
     Returns:
-        RunReport，含已发生的完整维护结果、逐题预测、最终状态和失败数量。
-
-    Notes:
-        装配、历史、冻结和评测在同一外壳串行执行，以固定 writer/reader/gold 的交付顺序。
+        已写出最终产物的 RunReport；异常时已落盘的日志和逐条记录继续保留。
     """
-    started = time.perf_counter()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     run_name = re.sub(r"[^\w.-]", "_", config.experiment.name)
     run_id = f"{run_name}-{timestamp}-{uuid4().hex}"
-    case = load_eval_case(config.data.manifest_path, config.data.selection)
-    scorer = load_official_scorer(config.data.official_scorer_path)
-    initial = empty_snapshot(
-        case.history_id, config.memory.local_slots, config.data.protocol_instruction
-    )
+    with run_logging(config.logging, run_id) as log_dir, log_phase(logger, "run"):
+        logger.info(
+            "logs_directory=%s output_directory=%s", log_dir, config.output.directory / run_id
+        )
+        (log_dir / "resolved_config.yaml").write_text(
+            yaml.safe_dump(config.model_dump(mode="json"), allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+        for filename in ("maintenance.jsonl", "predictions.jsonl"):
+            (log_dir / filename).touch(exist_ok=False)
+        with log_phase(logger, "resource_validation"):
+            validate_resources(config)
+        report = _execute_mab(config, run_id, log_dir)
+        with log_phase(logger, "write_report"):
+            write_run_report(report, config.output.directory)
+        logger.info(
+            "run status=%s output_directory=%s", report.status, config.output.directory / run_id
+        )
+        return report
+
+
+def _execute_mab(config: RunConfig, run_id: str, log_dir: Path) -> RunReport:
+    """串行装配、维护和评分；在同一外壳保留 writer/reader/gold 的交付边界。"""
+    started = time.perf_counter()
+    with log_phase(logger, "data_load"):
+        case = load_eval_case(config.data.manifest_path, config.data.selection)
+    with log_phase(logger, "scorer_load"):
+        scorer = load_official_scorer(config.data.official_scorer_path)
+    initial = empty_snapshot(case.history_id, config.data.protocol_instruction)
     backend, runtime = None, None
     records: list[MaintenanceResult] = []
-    predictions: tuple[Prediction, ...] = ()
+    predictions: list[Prediction] = []
     status, failure = "failed", None
+
+    def record_maintenance(result: MaintenanceResult) -> None:
+        append_jsonl(log_dir / "maintenance.jsonl", result)
+        records.append(result)
+
     try:
         import numpy as np
         import torch
@@ -439,22 +476,26 @@ def run_mab(config: RunConfig) -> RunReport:
         if config.model.device.startswith("cuda") and torch.cuda.is_available():
             torch.cuda.manual_seed_all(torch_seed)
             torch.cuda.reset_peak_memory_stats(config.model.device)
-        backend = D2LBackend(config.model)
-        manager = AgentManager(backend, config.prompts.manager_path, config.generation.manager)
-        runtime = MemoryRuntime(initial, backend, manager, config)
-        _consume_history(case, runtime, records)
+        with log_phase(logger, "backend_load"):
+            backend = D2LBackend(config.model)
+        with log_phase(logger, "runtime_setup", history_id=case.history_id):
+            runtime = MemoryRuntime(
+                initial, backend, config, record_maintenance=record_maintenance
+            )
+        with log_phase(logger, "history", history_id=case.history_id):
+            _consume_history(case, runtime)
         if runtime.status == "paused":
             status, failure = "paused", "历史维护暂停，未向 reader 交付测试问题"
         else:
-            predictions = _answer_questions(case, runtime, scorer)
+            _answer_questions(case, runtime, scorer, predictions, log_dir)
             status = "completed" if all(p.score is not None for p in predictions) else "partial"
     except (BackendError, BudgetExceeded, ConfigError, StateError, EvaluationError) as exc:
         failure = str(exc)
         status = "paused" if runtime is not None and runtime.status == "paused" else "failed"
-        logger.error("MAB execution status=%s: %s", status, failure)
+        logger.exception("MAB execution status=%s: %s", status, failure)
     snapshot = runtime.snapshot if runtime is not None else initial
     compiled = runtime.compiled if runtime is not None else empty_compiled()
-    metrics = _run_metrics(case, tuple(records), predictions, time.perf_counter() - started)
+    metrics = _run_metrics(case, tuple(records), tuple(predictions), time.perf_counter() - started)
     metrics["memory_usage"] = (
         measure_snapshot(snapshot, compiled.specs, backend.encode_text).model_dump(mode="json")
         if backend is not None
@@ -472,6 +513,8 @@ def run_mab(config: RunConfig) -> RunReport:
     )
     source_root = Path(__file__).parent
     manifest = {
+        "run_id": run_id,
+        "logs_directory": str(log_dir),
         "package_version": __version__,
         "python": sys.version,
         "status": status,
@@ -484,22 +527,29 @@ def run_mab(config: RunConfig) -> RunReport:
         "official_scorer_sha256": fingerprint_file(config.data.official_scorer_path),
         "code_sha256": {p.name: fingerprint_file(p) for p in sorted(source_root.glob("*.py"))},
         "prompt_sha256": {
-            "manager": fingerprint_file(config.prompts.manager_path),
             "task": fingerprint_file(config.prompts.task_path),
         },
         "model": backend.resource_fingerprints if backend is not None else None,
         "compiler_fingerprint": backend.compiler_fingerprint if backend is not None else None,
-        "protocol": "context-only writer; frozen snapshot per question; gold to scorer only",
+        "protocol": "direct chunk D2L; all factors retained; frozen per question; gold to scorer",
         "empty_memory_path": "pure_base",
         "compiled_inputs": [s.model_dump(mode="json") for s in compiled.specs],
     }
     return RunReport(
-        run_id, config, manifest, tuple(records), predictions, metrics, snapshot, compiled, status
+        run_id,
+        config,
+        manifest,
+        tuple(records),
+        tuple(predictions),
+        metrics,
+        snapshot,
+        compiled,
+        status,
     )
 
 
 def write_run_report(report: RunReport, output_dir: Path) -> None:
-    """在独立子目录写全部复现产物，拒绝覆盖；任何写入错误向上传递。
+    """写最终复现产物并引用已有日志目录，拒绝覆盖；写入错误向上传递。
 
     原始及完整组合因子使用 safetensors；CPU 副本只在写产物时创建，不进入在线状态。
     manifest.artifacts_complete 只有所有必要文件写完才变为 true。
@@ -526,13 +576,6 @@ def write_run_report(report: RunReport, output_dir: Path) -> None:
         yaml.safe_dump(report.config.model_dump(mode="json"), allow_unicode=True, sort_keys=False),
         encoding="utf-8",
     )
-    for filename, rows in (
-        ("maintenance.jsonl", report.maintenance),
-        ("predictions.jsonl", report.predictions),
-    ):
-        with (directory / filename).open("w", encoding="utf-8") as stream:
-            for row in rows:
-                stream.write(row.model_dump_json() + "\n")
     (directory / "final_snapshot.json").write_text(
         report.final_snapshot.model_dump_json(indent=2) + "\n",
         encoding="utf-8",

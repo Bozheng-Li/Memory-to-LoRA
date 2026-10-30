@@ -34,3 +34,9 @@ research/archive/
 
 # 测试用例：数量多，仅保留在本地
 Main-Code/tests/
+
+# 运行结果、构建产物与生成文件
+result/
+Main-Code/dist/
+Main-Code/.validation/
+docs/figures/*.pdf

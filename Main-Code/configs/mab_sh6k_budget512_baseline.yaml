@@ -1,11 +1,11 @@
-# 首版配置样例。主代码和 prompts/ 已实现；数值为待评测的首轮起点。
+# 直接 D2L 的 chunk=512 对照配置；当前 checkpoint 原生 rank=8。
 # 路径统一相对本 YAML 文件所在目录解析，禁止依赖启动时的工作目录。
-# 复制为同目录下的 mab_sh6k.yaml 后调整；代码不维护另一套默认配置。
-schema_version: 1
+# 按实验需求修改本文件；代码不维护另一套默认配置。
+schema_version: 2
 
 experiment:
   # 用于标识输出目录和运行记录，不决定算法分支。
-  name: mab_sh6k_lg_joint
+  name: mab_sh6k_d2l_direct_chunk512
   seed: 42
 
 model:
@@ -21,33 +21,25 @@ model:
   attention_implementation: eager
 
 memory:
-  local_slots: 4
-  global_blocks: 4
-  # 编译长度包含 D2L 聊天模板及特殊 token；不是原文字符数。
-  local_block_tokens: 512
-  global_block_tokens: 256
-  local_card_tokens: 96
-  # 包含来源、编译文本副本、卡片、记录、索引和必要元数据。
-  persistent_text_tokens: 8192
-  # 包含近期事件、执行摘要和唯一待处理候选。
-  working_tokens: 3072
-  # 同次维护中的所有补查共享此额度。
-  source_read_tokens: 1024
-  # 初次生成、来源补查、计划修复与纠正后的重提共用总次数。
-  max_manager_calls: 2
+  # 每个 chunk 直接生成 checkpoint 原生 rank 的 LoRA；当前 checkpoint 为 rank=8。
+  # 上限包含 D2L 模板与特殊 token；历史因子持续追加，不设置槽位或淘汰预算。
+  chunk_tokens: 512
 
 generation:
   task:
     max_input_tokens: 4096
     max_new_tokens: 512
     do_sample: false
-  manager:
-    max_input_tokens: 6144
-    max_new_tokens: 1024
-    do_sample: false
-
+    # 采样参数在 do_sample=true 时参与解码；不继承模型目录中的生成预设。
+    temperature: 1.0
+    top_p: 1.0
+    top_k: 50
+    repetition_penalty: 1.0
+    num_beams: 1
+    # 只控制单次生成的缓存，顶层调用之间仍不保留 KV。
+    use_cache: true
+    cache_implementation: null
 prompts:
-  manager_path: ../prompts/manager.md
   task_path: ../prompts/task.md
 
 data:
@@ -55,7 +47,7 @@ data:
   manifest_path: ../../resources/data/mab/first_eval.json
   selection: first_evaluation
   official_scorer_path: ../../research/benchmark_sources/mab_code/utils/eval_other_utils.py
-  # 来自 MAB FactConsolidation 的更新规则；同时提供给 writer 与 reader。
+  # 来自 MAB FactConsolidation 的更新规则，用于任务提示；D2L 只编译原始 context。
   # 不包含具体问题、答案或答案相关 metadata；规则展示时机作为本项目协议记录。
   protocol_instruction: |
     Facts are prefixed with serial numbers. When facts conflict, the fact
@@ -65,3 +57,8 @@ data:
 output:
   # 每次运行在此目录下创建独立子目录，禁止覆盖已有运行产物。
   directory: ../../research/runs
+
+logging:
+  # 与结果目录分开；每次运行写入 logs/<run_id>/，路径相对本 YAML。
+  directory: ../logs
+  level: INFO

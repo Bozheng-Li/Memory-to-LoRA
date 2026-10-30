@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "param-memory"
 version = "0.1.0"
-description = "Frozen D2L with agent-managed bounded local and global factual memory"
+description = "Frozen D2L with direct chunk compilation and accumulated LoRA memory"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
